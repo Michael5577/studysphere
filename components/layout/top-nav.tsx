@@ -2,12 +2,18 @@
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import type { AppUser } from "@/lib/auth";
 import { Bell, Search } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { allNavItems } from "@/types/navigation";
 
-export function TopNav({ className }: { className?: string }) {
+interface TopNavProps {
+  user: AppUser;
+  className?: string;
+}
+
+export function TopNav({ user, className }: TopNavProps) {
   const pathname = usePathname();
   const currentPage = allNavItems.find(
     (item) =>
@@ -54,7 +60,7 @@ export function TopNav({ className }: { className?: string }) {
           className="ml-1 hidden h-8 w-8 items-center justify-center rounded-[var(--radius)] bg-primary-muted text-xs font-semibold text-primary transition-default hover:bg-primary/10 sm:flex focus-ring"
           aria-label="Profile"
         >
-          MS
+          {user.initials}
         </Link>
       </div>
     </header>

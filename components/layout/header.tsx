@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { buttonStyles } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Menu, X } from "lucide-react";
 import Link from "next/link";
@@ -49,10 +49,12 @@ export function Header({ className }: HeaderProps) {
         </nav>
 
         <div className="hidden items-center gap-3 md:flex">
-          <Button variant="ghost" size="sm">
+          <Link href="/login" className={buttonStyles({ variant: "ghost", size: "sm" })}>
             Log in
-          </Button>
-          <Button size="sm">Get started</Button>
+          </Link>
+          <Link href="/signup" className={buttonStyles({ size: "sm" })}>
+            Get started
+          </Link>
         </div>
 
         <button
@@ -81,10 +83,12 @@ export function Header({ className }: HeaderProps) {
             ))}
           </nav>
           <div className="mt-4 flex flex-col gap-2 border-t border-border pt-4">
-            <Button variant="outline" className="w-full">
+            <Link href="/login" className={buttonStyles({ variant: "outline", className: "w-full" })}>
               Log in
-            </Button>
-            <Button className="w-full">Get started</Button>
+            </Link>
+            <Link href="/signup" className={buttonStyles({ className: "w-full" })}>
+              Get started
+            </Link>
           </div>
         </div>
       )}

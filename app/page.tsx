@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { buttonStyles } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -120,13 +120,13 @@ export default function Home() {
               </p>
 
               <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
-                <Button size="lg">
+                <Link href="/signup" className={buttonStyles({ size: "lg" })}>
                   Get started free
                   <ArrowRight className="h-4 w-4" />
-                </Button>
-                <Button variant="outline" size="lg">
+                </Link>
+                <a href="#how-it-works" className={buttonStyles({ variant: "outline", size: "lg" })}>
                   See how it works
-                </Button>
+                </a>
               </div>
 
               <p className="mt-4 font-mono text-xs uppercase tracking-wider text-muted">
@@ -358,13 +358,13 @@ export default function Home() {
                 </ul>
 
                 <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
-                  <Button size="lg">
+                  <Link href="/signup" className={buttonStyles({ size: "lg" })}>
                     Create free account
                     <ArrowRight className="h-4 w-4" />
-                  </Button>
-                  <Button variant="outline" size="lg">
+                  </Link>
+                  <Link href="/login" className={buttonStyles({ variant: "outline", size: "lg" })}>
                     Log in
-                  </Button>
+                  </Link>
                 </div>
               </CardContent>
             </Card>

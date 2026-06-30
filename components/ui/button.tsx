@@ -27,6 +27,24 @@ const sizeStyles: Record<ButtonSize, string> = {
   lg: "h-10 px-4 text-sm gap-2",
 };
 
+export function buttonStyles({
+  variant = "primary",
+  size = "md",
+  className,
+}: {
+  variant?: ButtonVariant;
+  size?: ButtonSize;
+  className?: string;
+} = {}) {
+  return cn(
+    "inline-flex items-center justify-center rounded-[var(--radius)] font-medium transition-default focus-ring",
+    "disabled:pointer-events-none disabled:opacity-50",
+    variantStyles[variant],
+    sizeStyles[size],
+    className,
+  );
+}
+
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   (
     {
@@ -45,13 +63,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         type={type}
         disabled={disabled}
-        className={cn(
-          "inline-flex items-center justify-center rounded-[var(--radius)] font-medium transition-default focus-ring",
-          "disabled:pointer-events-none disabled:opacity-50",
-          variantStyles[variant],
-          sizeStyles[size],
-          className,
-        )}
+        className={buttonStyles({ variant, size, className })}
         {...props}
       >
         {children}

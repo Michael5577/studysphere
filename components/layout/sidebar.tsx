@@ -1,6 +1,8 @@
 "use client";
 
+import { LogoutButton } from "@/components/auth/logout-button";
 import { cn } from "@/lib/utils";
+import type { AppUser } from "@/lib/auth";
 import {
   type NavItem,
   primaryNavItems,
@@ -37,7 +39,12 @@ function NavLink({ item }: { item: NavItem }) {
   );
 }
 
-export function Sidebar({ className }: { className?: string }) {
+interface SidebarProps {
+  user: AppUser;
+  className?: string;
+}
+
+export function Sidebar({ user, className }: SidebarProps) {
   return (
     <aside
       className={cn(
@@ -70,18 +77,19 @@ export function Sidebar({ className }: { className?: string }) {
         ))}
       </nav>
 
-      <div className="border-t border-border p-3">
+      <div className="border-t border-border p-3 space-y-1">
         <div className="flex items-center gap-3 rounded-[var(--radius)] px-3 py-2">
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--radius)] bg-primary-muted text-xs font-semibold text-primary">
-            MS
+            {user.initials}
           </div>
           <div className="min-w-0">
             <p className="truncate text-sm font-medium text-text">
-              Michael Serbeh
+              {user.displayName}
             </p>
-            <p className="truncate text-caption">Computer Science</p>
+            <p className="truncate text-caption">{user.email}</p>
           </div>
         </div>
+        <LogoutButton />
       </div>
     </aside>
   );
