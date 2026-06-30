@@ -1,65 +1,79 @@
+import { ProfileForm } from "@/components/profile/profile-form";
+import { ProfileStats } from "@/components/profile/profile-stats";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { PageContainer } from "@/components/layout/page-container";
 import { SectionHeader } from "@/components/layout/section-header";
+import { getDashboardStats } from "@/lib/db/dashboard";
+import { ensureProfile } from "@/lib/db/profile";
+import { formatMemberSince, getInitials } from "@/lib/format";
+import { requireUserId } from "@/lib/db/auth";
+import { createClient } from "@/lib/supabase/server";
 import { BookOpen, Calendar, GraduationCap, Mail } from "lucide-react";
 
-const profileStats = [
-  { label: "Courses", value: "5" },
-  { label: "Assignments done", value: "24" },
-  { label: "Focus hours", value: "38h" },
-  { label: "Streak", value: "12 days" },
-];
+export default async function ProfilePage() {
+  const userId = await requireUserId();
+  const profile = await ensureProfile(userId);
 
-export default function ProfilePage() {
+  const [stats, supabase] = await Promise.all([
+    getDashboardStats(),
+    createClient(),
+  ]);
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const email = user?.email ?? "";
+  const displayName = profile.full_name?.trim() || email.split("@")[0] || "Student";
+  const subtitle = [profile.major, profile.year_level]
+    .filter(Boolean)
+    .join(" · ");
+
+  const details = [
+    { icon: Mail, label: "Email", value: email || "—" },
+    { icon: GraduationCap, label: "Major", value: profile.major || "—" },
+    {
+      icon: BookOpen,
+      label: "Year level",
+      value: profile.year_level || "—",
+    },
+    {
+      icon: Calendar,
+      label: "Member since",
+      value: formatMemberSince(profile.created_at),
+    },
+  ];
+
   return (
     <PageContainer size="narrow">
       <div className="section-stack">
-        <SectionHeader
-          title="Profile"
-          description="Your academic identity"
-        />
+        <SectionHeader title="Profile" description="Your academic identity" />
 
         <Card padding="lg">
           <div className="flex items-start gap-5">
             <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[var(--radius)] bg-primary-muted text-xl font-semibold text-primary">
-              MS
+              {getInitials(displayName)}
             </div>
             <div className="min-w-0">
-              <h2 className="text-lg font-semibold text-text">
-                Michael Serbeh
-              </h2>
-              <p className="mt-0.5 text-caption">Computer Science · Junior</p>
-              <Badge variant="primary" className="mt-3">
-                State University
-              </Badge>
+              <h2 className="text-lg font-semibold text-text">{displayName}</h2>
+              <p className="mt-0.5 text-caption">
+                {subtitle || "Add your major and year level"}
+              </p>
+              {profile.university && (
+                <Badge variant="primary" className="mt-3">
+                  {profile.university}
+                </Badge>
+              )}
             </div>
           </div>
 
-          <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {profileStats.map((stat) => (
-              <div
-                key={stat.label}
-                className="rounded-[var(--radius)] border border-border bg-background px-3 py-3 text-center"
-              >
-                <p className="text-label">{stat.label}</p>
-                <p className="mt-1 text-lg font-semibold text-text">
-                  {stat.value}
-                </p>
-              </div>
-            ))}
-          </div>
+          <ProfileStats stats={stats} />
         </Card>
 
         <Card padding="none">
           <div className="divide-y divide-border">
-            {[
-              { icon: Mail, label: "Email", value: "michael.serbeh@university.edu" },
-              { icon: GraduationCap, label: "Major", value: "Computer Science" },
-              { icon: BookOpen, label: "Semester", value: "Fall 2026" },
-              { icon: Calendar, label: "Member since", value: "August 2025" },
-            ].map((item) => (
+            {details.map((item) => (
               <div
                 key={item.label}
                 className="flex items-center gap-4 px-5 py-4"
@@ -76,9 +90,7 @@ export default function ProfilePage() {
           </div>
         </Card>
 
-        <Button variant="outline" className="w-full sm:w-auto">
-          Edit profile
-        </Button>
+        <ProfileForm profile={profile} />
       </div>
     </PageContainer>
   );

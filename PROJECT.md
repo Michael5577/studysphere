@@ -252,6 +252,83 @@ Before implementing any feature:
 
 # Current Sprint
 
+Sprint 4 — Real Data + CRUD
+
+Objectives:
+
+* Replace placeholder app data with authenticated Supabase reads
+* Implement MVP CRUD for courses and assignments
+* Wire dashboard, profile, and settings to real data
+* Add server actions with validation and path revalidation
+
+Success Criteria:
+
+* Courses and assignments are fully CRUD-able from the UI
+* Archived courses are hidden from the main courses list
+* Dashboard shows real stats and due-soon assignments
+* Profile and settings read/write `profiles` and `user_preferences`
+* Build and lint pass with no placeholder arrays on wired pages
+* Ready for Sprint 5 (focus timer writes, calendar, etc.)
+
+---
+
+# Database Setup
+
+StudySphere stores user-owned data in Supabase PostgreSQL.
+
+## Apply the schema
+
+1. Open your Supabase project dashboard.
+2. Go to **SQL Editor**.
+3. Click **New query**.
+4. Copy the full contents of [`supabase/schema.sql`](supabase/schema.sql).
+5. Paste into the editor and click **Run**.
+6. Confirm success with no errors.
+
+## Verify tables
+
+In **Table Editor**, confirm these tables exist:
+
+* `profiles`
+* `user_preferences`
+* `courses`
+* `assignments`
+* `study_sessions`
+
+Each table should show **RLS enabled**.
+
+## Verify new user bootstrap
+
+1. Sign up a new test user in the app, or create one in **Authentication → Users**.
+2. Confirm rows were created in:
+   * `profiles`
+   * `user_preferences`
+
+Existing users created before the schema was applied will need profile rows inserted manually or via a one-time backfill.
+
+## Local environment
+
+Ensure `.env.local` contains:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-legacy-anon-or-publishable-key
+```
+
+Use the legacy anon key (`eyJ...`) if auth requests fail with the publishable key.
+
+---
+
+# Previous Sprints
+
+Sprint 2 — Authentication
+
+Objectives:
+
+* Supabase login and signup
+* Protected app routes
+* Logout and session handling
+
 Sprint 1 — Foundation
 
 Objectives:
@@ -261,14 +338,6 @@ Objectives:
 * Create reusable UI components
 * Set up project structure
 * Prepare for authentication
-
-Success Criteria:
-
-* App runs successfully
-* Landing page is visually polished
-* Responsive layout
-* Reusable components established
-* Ready for Sprint 2
 
 ---
 
