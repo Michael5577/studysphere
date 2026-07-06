@@ -6,7 +6,7 @@ interface PageContainerProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 const sizeStyles = {
-  default: "max-w-[var(--container-app)]",
+  default: "max-w-[var(--container-content)]",
   narrow: "max-w-[var(--container-narrow)]",
   full: "max-w-none",
 };
@@ -20,7 +20,7 @@ export function PageContainer({
   return (
     <div
       className={cn(
-        "mx-auto w-full px-4 py-6 sm:px-6 lg:px-8",
+        "page-container-compact mx-auto w-full min-w-0 max-w-full px-4 py-4 safe-area-x sm:px-5 sm:py-5 lg:py-6",
         sizeStyles[size],
         className,
       )}

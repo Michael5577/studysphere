@@ -34,6 +34,13 @@ export interface ProfileUpdate {
   updated_at?: string;
 }
 
+export type ColorSchemePreference = "light" | "dark" | "system";
+export type BackgroundStylePreference =
+  | "vivid"
+  | "organic"
+  | "minimal"
+  | "aurora";
+
 export interface UserPreferences {
   user_id: string;
   work_duration_minutes: number;
@@ -44,6 +51,8 @@ export interface UserPreferences {
   assignment_reminders: boolean;
   daily_summary_email: boolean;
   focus_session_alerts: boolean;
+  color_scheme: ColorSchemePreference;
+  background_style: BackgroundStylePreference;
   created_at: string;
   updated_at: string;
 }
@@ -58,6 +67,8 @@ export interface UserPreferencesInsert {
   assignment_reminders?: boolean;
   daily_summary_email?: boolean;
   focus_session_alerts?: boolean;
+  color_scheme?: ColorSchemePreference;
+  background_style?: BackgroundStylePreference;
   created_at?: string;
   updated_at?: string;
 }
@@ -71,6 +82,8 @@ export interface UserPreferencesUpdate {
   assignment_reminders?: boolean;
   daily_summary_email?: boolean;
   focus_session_alerts?: boolean;
+  color_scheme?: ColorSchemePreference;
+  background_style?: BackgroundStylePreference;
   updated_at?: string;
 }
 
@@ -269,5 +282,29 @@ export interface ActiveCourseSummary {
   name: string;
   color_key: CourseColorKey;
   open_assignments_count: number;
+}
+
+export interface AnalyticsDayFocus {
+  date: string;
+  minutes: number;
+}
+
+export interface AnalyticsCourseWorkload {
+  course_id: string;
+  code: string;
+  name: string;
+  color_key: CourseColorKey;
+  count: number;
+}
+
+export interface AnalyticsSummary {
+  total_focus_minutes: number;
+  total_sessions: number;
+  streak_days: number;
+  completion_rate: number;
+  open_assignments: number;
+  completed_assignments: number;
+  last_7_days: AnalyticsDayFocus[];
+  workload_by_course: AnalyticsCourseWorkload[];
 }
 

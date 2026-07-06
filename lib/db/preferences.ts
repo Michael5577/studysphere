@@ -12,6 +12,8 @@ const DEFAULT_PREFERENCES = {
   assignment_reminders: true,
   daily_summary_email: false,
   focus_session_alerts: true,
+  color_scheme: "system",
+  background_style: "vivid",
 };
 
 export async function ensureUserPreferences(

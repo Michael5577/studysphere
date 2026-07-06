@@ -6,6 +6,7 @@ import {
 } from "@/components/assignments/assignment-form";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogFooter } from "@/components/ui/dialog";
+import { useToast } from "@/components/ui/toast-provider";
 import {
   createAssignmentAction,
   updateAssignmentAction,
@@ -27,6 +28,7 @@ export function CreateAssignmentDialog({
   assignment,
 }: CreateAssignmentDialogProps) {
   const router = useRouter();
+  const toast = useToast();
   const isEdit = Boolean(assignment);
   const formId = isEdit ? "edit-assignment-form" : "create-assignment-form";
 
@@ -39,6 +41,7 @@ export function CreateAssignmentDialog({
       throw new Error(result.message);
     }
 
+    toast.success(isEdit ? "Assignment updated" : "Assignment created");
     onOpenChange(false);
     router.refresh();
   }

@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/toast-provider";
 import {
   archiveCourseAction,
   deleteCourseAction,
@@ -17,6 +18,7 @@ interface CourseActionsMenuProps {
 
 export function CourseActionsMenu({ course, onEdit }: CourseActionsMenuProps) {
   const router = useRouter();
+  const toast = useToast();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -35,10 +37,11 @@ export function CourseActionsMenu({ course, onEdit }: CourseActionsMenuProps) {
     setOpen(false);
 
     if (!result.ok) {
-      window.alert(result.message);
+      toast.error(result.message);
       return;
     }
 
+    toast.success(`${course.code} archived`);
     router.refresh();
   }
 
@@ -57,10 +60,11 @@ export function CourseActionsMenu({ course, onEdit }: CourseActionsMenuProps) {
     setOpen(false);
 
     if (!result.ok) {
-      window.alert(result.message);
+      toast.error(result.message);
       return;
     }
 
+    toast.success(`${course.code} deleted`);
     router.refresh();
   }
 

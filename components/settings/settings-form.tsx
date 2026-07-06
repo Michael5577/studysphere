@@ -1,7 +1,9 @@
 "use client";
 
+import { AppearanceSettings } from "@/components/settings/appearance-settings";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { useToast } from "@/components/ui/toast-provider";
 import { updatePreferencesAction } from "@/lib/actions/preferences-actions";
 import type { UserPreferences } from "@/types/database";
 import { useRouter } from "next/navigation";
@@ -45,6 +47,7 @@ function Toggle({
 
 export function SettingsForm({ preferences }: SettingsFormProps) {
   const router = useRouter();
+  const toast = useToast();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [values, setValues] = useState({
@@ -60,7 +63,10 @@ export function SettingsForm({ preferences }: SettingsFormProps) {
     show_completed_assignments: preferences.show_completed_assignments,
   });
 
-  async function save(patch: Parameters<typeof updatePreferencesAction>[0]) {
+  async function save(
+    patch: Parameters<typeof updatePreferencesAction>[0],
+    successMessage = "Settings saved",
+  ) {
     setSaving(true);
     setError(null);
 
@@ -70,9 +76,11 @@ export function SettingsForm({ preferences }: SettingsFormProps) {
 
     if (!result.ok) {
       setError(result.message);
+      toast.error(result.message);
       return;
     }
 
+    toast.success(successMessage);
     router.refresh();
   }
 
@@ -86,7 +94,16 @@ export function SettingsForm({ preferences }: SettingsFormProps) {
     value: boolean,
   ) {
     setValues((current) => ({ ...current, [key]: value }));
-    await save({ [key]: value });
+    const messages: Record<string, string> = {
+      compact_mode: value ? "Compact mode enabled" : "Compact mode disabled",
+      show_completed_assignments: value
+        ? "Completed assignments visible"
+        : "Completed assignments hidden",
+      assignment_reminders: "Notification preference saved",
+      daily_summary_email: "Notification preference saved",
+      focus_session_alerts: "Notification preference saved",
+    };
+    await save({ [key]: value }, messages[key]);
   }
 
   async function handleNumberBlur(
@@ -102,7 +119,7 @@ export function SettingsForm({ preferences }: SettingsFormProps) {
       return;
     }
 
-    await save({ [key]: parsed });
+    await save({ [key]: parsed }, "Timer settings saved");
   }
 
   const sections = [
@@ -149,8 +166,8 @@ export function SettingsForm({ preferences }: SettingsFormProps) {
       ],
     },
     {
-      title: "Appearance",
-      description: "Personalize your workspace",
+      title: "Display",
+      description: "Compact layout and assignment visibility",
       fields: [
         {
           type: "toggle" as const,
@@ -177,8 +194,23 @@ export function SettingsForm({ preferences }: SettingsFormProps) {
         </div>
       )}
 
+      <Card padding="none" className="surface-card">
+        <div className="border-b border-border px-5 py-4">
+          <h3 className="text-sm font-semibold text-text">Appearance</h3>
+          <p className="mt-0.5 text-caption">
+            Dark mode, color mode, and background style
+          </p>
+        </div>
+        <div className="px-5 py-5">
+          <AppearanceSettings
+            initialColorScheme={preferences.color_scheme ?? "system"}
+            initialBackgroundStyle={preferences.background_style ?? "vivid"}
+          />
+        </div>
+      </Card>
+
       {sections.map((section) => (
-        <Card key={section.title} padding="none">
+        <Card key={section.title} padding="none" className="surface-card">
           <div className="border-b border-border px-5 py-4">
             <h3 className="text-sm font-semibold text-text">{section.title}</h3>
             <p className="mt-0.5 text-caption">{section.description}</p>
@@ -218,6 +250,45 @@ export function SettingsForm({ preferences }: SettingsFormProps) {
           </div>
         </Card>
       ))}
+
+      <Card padding="none" className="surface-card">
+        <div className="border-b border-border px-5 py-4">
+          <h3 className="text-sm font-semibold text-text">Keyboard shortcuts</h3>
+          <p className="mt-0.5 text-caption">
+            Power-user controls across StudySphere
+          </p>
+        </div>
+        <div className="divide-y divide-border px-5 py-1">
+          <ShortcutRow keys={["⌘", "K"]} label="Open command palette" />
+          <ShortcutRow keys={["⌘", "J"]} label="Toggle AI assistant" />
+          <ShortcutRow keys={["Enter"]} label="Send assistant message" />
+          <ShortcutRow keys={["Shift", "Enter"]} label="New line in assistant" />
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+function ShortcutRow({
+  keys,
+  label,
+}: {
+  keys: string[];
+  label: string;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4 py-3">
+      <span className="text-sm text-text">{label}</span>
+      <span className="flex gap-1">
+        {keys.map((key) => (
+          <kbd
+            key={key}
+            className="rounded border border-border bg-background px-1.5 py-0.5 font-mono text-[10px] text-muted"
+          >
+            {key}
+          </kbd>
+        ))}
+      </span>
     </div>
   );
 }

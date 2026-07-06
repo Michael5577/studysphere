@@ -1,41 +1,86 @@
 # StudySphere
 
-Your academic command center — a premium student productivity app built with Next.js, TypeScript, Tailwind CSS, and Supabase.
+**Your Academic Command Center** — a production-ready student productivity app for managing courses, assignments, deadlines, and focus time.
 
-## Getting Started
+Built with Next.js, TypeScript, Tailwind CSS, and Supabase.
 
-### 1. Install dependencies
+## Features
+
+- **Authentication** — Secure signup, login, and logout via Supabase Auth
+- **Dashboard** — Personalized overview with due-today stats, active courses, and focus time
+- **Courses** — Create, edit, archive, and delete courses with color coding
+- **Assignments** — Track deadlines, status, and priority with full CRUD
+- **Calendar** — Week view of assignments grouped by due date
+- **Focus Timer** — Pomodoro sessions with user preferences and session history
+- **Profile** — Edit academic identity and view productivity stats
+- **Settings** — Timer durations, notification toggles, compact mode, and assignment visibility
+- **Mobile-first UI** — Fixed app bars, bottom navigation, safe-area support, and PWA metadata
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|------------|
+| Framework | Next.js 16 (App Router) |
+| Language | TypeScript |
+| Styling | Tailwind CSS 4 |
+| Database | Supabase PostgreSQL |
+| Auth | Supabase Auth |
+| Icons | Lucide React |
+| Deployment | Vercel |
+
+## Local Setup
+
+### Prerequisites
+
+- Node.js 20+
+- npm
+- A Supabase project
+
+### 1. Clone and install
 
 ```bash
+git clone <your-repo-url>
+cd studysphere
 npm install
 ```
 
-### 2. Configure environment variables
+### 2. Environment variables
 
 ```bash
 cp .env.local.example .env.local
 ```
 
-Add your Supabase credentials from **Project Settings → API Keys**:
+Fill in your Supabase credentials from **Project Settings → API Keys**:
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-legacy-anon-key
 ```
 
-### 3. Apply the database schema
+> Use the **legacy anon key** (`eyJ...`) from the Legacy tab if auth requests fail with the publishable key.
 
-Run the SQL in [`supabase/schema.sql`](supabase/schema.sql) via the Supabase **SQL Editor**.
+### 3. Database schema
 
-Full setup and verification steps are in [`PROJECT.md`](PROJECT.md#database-setup).
+1. Open your Supabase project dashboard
+2. Go to **SQL Editor → New query**
+3. Copy and run the full contents of [`supabase/schema.sql`](supabase/schema.sql)
+4. Confirm these tables exist with RLS enabled: `profiles`, `user_preferences`, `courses`, `assignments`, `study_sessions`
 
-### 4. Start the dev server
+Detailed verification steps are in [`PROJECT.md`](PROJECT.md#database-setup).
+
+### 4. Run locally
 
 ```bash
 npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
+
+### 5. Test account
+
+Create a test user via the signup page, or add one in **Supabase → Authentication → Users**. On first login, profile and preference rows are bootstrapped automatically.
+
+> **Demo placeholder:** Replace with your own test credentials before sharing the deployed app.
 
 ## Scripts
 
@@ -45,15 +90,44 @@ Open [http://localhost:3000](http://localhost:3000).
 | `npm run build` | Production build |
 | `npm run start` | Start production server |
 | `npm run lint` | Run ESLint |
+| `npm run icons` | Regenerate all icons (PNG, ICO) from `public/icon.svg` |
 
-## Project structure
+## Deployment (Vercel)
+
+1. Push the repo to GitHub
+2. Import the project in [Vercel](https://vercel.com)
+3. Add environment variables:
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+4. Deploy
+
+Ensure the Supabase schema is applied to your production project before testing.
+
+### Post-deploy checklist
+
+- [ ] Sign up / login works
+- [ ] Create a course and assignment
+- [ ] Calendar shows dated assignments
+- [ ] Focus timer saves a session
+- [ ] Settings toggles persist
+- [ ] Mobile layout and PWA install metadata work
+
+## Project Structure
 
 ```
-app/              # Next.js App Router pages
-components/       # UI and layout components
-lib/              # Utilities, Supabase clients, actions
+app/              # Next.js App Router pages and layouts
+components/       # UI, layout, and feature components
+lib/              # Supabase clients, DB queries, server actions
 supabase/         # SQL schema
 types/            # Shared TypeScript types
+public/           # Static assets (icon, etc.)
 ```
 
-See [`PROJECT.md`](PROJECT.md) for product vision, sprint goals, and engineering standards.
+## Environment Files
+
+| File | Committed | Purpose |
+|------|-----------|---------|
+| `.env.local.example` | Yes | Template for required env vars |
+| `.env.local` | No (gitignored) | Your local secrets |
+
+See [`PROJECT.md`](PROJECT.md) for product vision, design philosophy, and engineering standards.

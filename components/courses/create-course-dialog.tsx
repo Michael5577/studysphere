@@ -6,6 +6,7 @@ import {
 } from "@/components/courses/course-form";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogFooter } from "@/components/ui/dialog";
+import { useToast } from "@/components/ui/toast-provider";
 import {
   createCourseAction,
   updateCourseAction,
@@ -25,6 +26,7 @@ export function CreateCourseDialog({
   course,
 }: CreateCourseDialogProps) {
   const router = useRouter();
+  const toast = useToast();
   const isEdit = Boolean(course);
   const formId = isEdit ? "edit-course-form" : "create-course-form";
 
@@ -37,6 +39,7 @@ export function CreateCourseDialog({
       throw new Error(result.message);
     }
 
+    toast.success(isEdit ? "Course updated" : "Course created");
     onOpenChange(false);
     router.refresh();
   }

@@ -11,20 +11,21 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantStyles: Record<ButtonVariant, string> = {
   primary:
-    "bg-primary text-white hover:bg-primary-hover border border-transparent",
+    "bg-primary text-primary-foreground border border-transparent shadow-[var(--shadow-soft)] hover:bg-primary-hover hover:shadow-[0_6px_24px_-4px_rgba(93,112,82,0.25)]",
   secondary:
-    "bg-primary-muted text-primary hover:bg-primary/10 border border-transparent",
+    "bg-secondary text-secondary-foreground border border-transparent shadow-[var(--shadow-soft)] hover:brightness-105",
   outline:
-    "border border-border bg-surface text-text hover:bg-background",
-  ghost: "text-muted hover:bg-background hover:text-text border border-transparent",
+    "border-2 border-secondary bg-transparent text-secondary hover:bg-secondary/10",
+  ghost:
+    "text-primary border border-transparent hover:bg-primary-muted",
   danger:
-    "bg-error/10 text-error hover:bg-error/15 border border-transparent",
+    "bg-error/10 text-error border border-transparent hover:bg-error/15",
 };
 
 const sizeStyles: Record<ButtonSize, string> = {
-  sm: "h-8 px-3 text-xs gap-1.5",
-  md: "h-9 px-3.5 text-sm gap-2",
-  lg: "h-10 px-4 text-sm gap-2",
+  sm: "h-10 px-5 text-sm gap-1.5",
+  md: "h-12 px-6 text-sm gap-2",
+  lg: "h-14 px-8 text-base gap-2",
 };
 
 export function buttonStyles({
@@ -37,8 +38,9 @@ export function buttonStyles({
   className?: string;
 } = {}) {
   return cn(
-    "inline-flex items-center justify-center rounded-[var(--radius)] font-medium transition-default focus-ring",
-    "disabled:pointer-events-none disabled:opacity-50",
+    "inline-flex items-center justify-center rounded-full font-semibold transition-default focus-ring touch-manipulation",
+    "hover:scale-[1.02] active:scale-[0.98]",
+    "disabled:pointer-events-none disabled:opacity-50 disabled:scale-100",
     variantStyles[variant],
     sizeStyles[size],
     className,

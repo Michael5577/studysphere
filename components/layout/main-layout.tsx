@@ -1,3 +1,7 @@
+"use client";
+
+import { AssistantPanel } from "@/components/assistant/assistant-panel";
+import { AssistantProvider } from "@/components/assistant/assistant-provider";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { Sidebar } from "@/components/layout/sidebar";
 import { TopNav } from "@/components/layout/top-nav";
@@ -6,21 +10,35 @@ import type { AppUser } from "@/lib/auth";
 interface MainLayoutProps {
   children: React.ReactNode;
   user: AppUser;
+  compactMode?: boolean;
 }
 
-export function MainLayout({ children, user }: MainLayoutProps) {
+function MainLayoutInner({
+  children,
+  user,
+  compactMode = false,
+}: MainLayoutProps) {
   return (
-    <div className="flex h-dvh overflow-hidden bg-background">
+    <div className="app-shell" data-compact={compactMode ? "true" : undefined}>
       <Sidebar user={user} className="hidden lg:flex" />
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <TopNav user={user} />
-        <main className="flex-1 overflow-y-auto pb-[var(--mobile-nav-height)] lg:pb-0">
-          {children}
+        <main className="app-main-scroll">
+          <div className="app-page-inner">{children}</div>
         </main>
       </div>
 
-      <MobileNav className="lg:hidden" />
+      <MobileNav className="app-mobile-nav lg:hidden" />
+      <AssistantPanel />
     </div>
+  );
+}
+
+export function MainLayout(props: MainLayoutProps) {
+  return (
+    <AssistantProvider>
+      <MainLayoutInner {...props} />
+    </AssistantProvider>
   );
 }

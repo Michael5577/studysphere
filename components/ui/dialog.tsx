@@ -51,7 +51,7 @@ export function Dialog({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[70] flex items-end justify-center sm:items-center sm:p-4">
       <button
         type="button"
         aria-label="Close dialog"
@@ -65,13 +65,15 @@ export function Dialog({
         aria-describedby={description ? descriptionId : undefined}
         padding="none"
         className={cn(
-          "relative z-10 w-full max-w-lg shadow-lg",
+          "relative z-10 flex max-h-[min(90dvh,100%)] w-full max-w-lg flex-col shadow-[var(--shadow-float)]",
+          "rounded-t-[2rem] sm:rounded-[2rem]",
+          "pb-[var(--safe-area-bottom)]",
           className,
         )}
       >
-        <div className="flex items-start justify-between gap-4 border-b border-border px-5 py-4">
-          <div>
-            <h2 id={titleId} className="text-sm font-semibold text-text">
+        <div className="flex shrink-0 items-start justify-between gap-4 border-b border-border px-5 py-4">
+          <div className="min-w-0">
+            <h2 id={titleId} className="font-serif text-heading">
               {title}
             </h2>
             {description && (
@@ -91,7 +93,7 @@ export function Dialog({
             <X className="h-4 w-4" />
           </Button>
         </div>
-        <div className="px-5 py-4">{children}</div>
+        <div className="overflow-y-auto px-5 py-4">{children}</div>
       </Card>
     </div>
   );

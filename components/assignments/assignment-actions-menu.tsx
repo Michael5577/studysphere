@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/toast-provider";
 import {
   deleteAssignmentAction,
   markAssignmentCompleteAction,
@@ -26,20 +27,25 @@ export function AssignmentActionsMenu({
   onEdit,
 }: AssignmentActionsMenuProps) {
   const router = useRouter();
+  const toast = useToast();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  async function runAction(action: () => Promise<{ ok: boolean; message?: string }>) {
+  async function runAction(
+    action: () => Promise<{ ok: boolean; message?: string }>,
+    successMessage: string,
+  ) {
     setLoading(true);
     const result = await action();
     setLoading(false);
     setOpen(false);
 
     if (!result.ok) {
-      window.alert(result.message);
+      toast.error(result.message ?? "Something went wrong");
       return;
     }
 
+    toast.success(successMessage);
     router.refresh();
   }
 
@@ -71,7 +77,10 @@ export function AssignmentActionsMenu({
                 type="button"
                 className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-text hover:bg-background"
                 onClick={() =>
-                  runAction(() => markAssignmentCompleteAction(assignment.id))
+                  runAction(
+                    () => markAssignmentCompleteAction(assignment.id),
+                    "Assignment completed",
+                  )
                 }
               >
                 <Check className="h-3.5 w-3.5" />
@@ -99,8 +108,10 @@ export function AssignmentActionsMenu({
                   className="flex w-full px-3 py-1.5 text-left text-sm text-text hover:bg-background disabled:opacity-50"
                   disabled={assignment.status === value}
                   onClick={() =>
-                    runAction(() =>
-                      updateAssignmentStatusAction(assignment.id, value),
+                    runAction(
+                      () =>
+                        updateAssignmentStatusAction(assignment.id, value),
+                      "Status updated",
                     )
                   }
                 >
@@ -118,8 +129,10 @@ export function AssignmentActionsMenu({
                   className="flex w-full px-3 py-1.5 text-left text-sm text-text hover:bg-background disabled:opacity-50"
                   disabled={assignment.priority === value}
                   onClick={() =>
-                    runAction(() =>
-                      updateAssignmentPriorityAction(assignment.id, value),
+                    runAction(
+                      () =>
+                        updateAssignmentPriorityAction(assignment.id, value),
+                      "Priority updated",
                     )
                   }
                 >
@@ -136,7 +149,10 @@ export function AssignmentActionsMenu({
                   return;
                 }
 
-                runAction(() => deleteAssignmentAction(assignment.id));
+                runAction(
+                  () => deleteAssignmentAction(assignment.id),
+                  "Assignment deleted",
+                );
               }}
             >
               <Trash2 className="h-3.5 w-3.5" />

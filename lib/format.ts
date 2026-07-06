@@ -110,3 +110,67 @@ export function getInitials(name: string): string {
       .toUpperCase() || "SS"
   );
 }
+
+export function formatTimerDisplay(totalSeconds: number): string {
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+}
+
+export function formatDurationSeconds(totalSeconds: number): string {
+  if (totalSeconds < 60) {
+    return `${totalSeconds}s`;
+  }
+
+  return formatDurationMinutes(Math.floor(totalSeconds / 60));
+}
+
+export function formatDueTime(dueAt: string | null): string {
+  if (!dueAt) {
+    return "—";
+  }
+
+  return new Date(dueAt).toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+export function formatCalendarDayLabel(date: Date): string {
+  return date.toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+export function formatRelativeSessionDate(date: string): string {
+  const value = new Date(date);
+  const now = new Date();
+  const startOfToday = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+  );
+  const startOfDate = new Date(
+    value.getFullYear(),
+    value.getMonth(),
+    value.getDate(),
+  );
+  const diffDays = Math.round(
+    (startOfToday.getTime() - startOfDate.getTime()) / (1000 * 60 * 60 * 24),
+  );
+
+  if (diffDays === 0) {
+    return "Today";
+  }
+
+  if (diffDays === 1) {
+    return "Yesterday";
+  }
+
+  return value.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
+}

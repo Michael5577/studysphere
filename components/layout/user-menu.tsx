@@ -49,7 +49,7 @@ export function UserMenu({ user }: UserMenuProps) {
       <div className="border-t border-border p-1">
         <LogoutButton variant="menu" className="gap-2 px-3 py-2 text-sm">
           <LogOut className="h-4 w-4 text-muted" />
-          Sign out
+          Logout
         </LogoutButton>
       </div>
     </Popover>

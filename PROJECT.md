@@ -252,23 +252,22 @@ Before implementing any feature:
 
 # Current Sprint
 
-Sprint 4 — Real Data + CRUD
+Final MVP — Calendar, Preferences, Deployment Readiness
 
 Objectives:
 
-* Replace placeholder app data with authenticated Supabase reads
-* Implement MVP CRUD for courses and assignments
-* Wire dashboard, profile, and settings to real data
-* Add server actions with validation and path revalidation
+* Real calendar view from assignment data
+* Working preferences (`compact_mode`, `show_completed_assignments`)
+* Toast feedback on all CRUD actions
+* Orbit Flow brand icon and green theme alignment
+* Mobile Simulator QA and Vercel deployment
 
 Success Criteria:
 
-* Courses and assignments are fully CRUD-able from the UI
-* Archived courses are hidden from the main courses list
-* Dashboard shows real stats and due-soon assignments
-* Profile and settings read/write `profiles` and `user_preferences`
-* Build and lint pass with no placeholder arrays on wired pages
-* Ready for Sprint 5 (focus timer writes, calendar, etc.)
+* All MVP routes polished on mobile and desktop
+* Lint and build pass
+* PWA installable with new icon set
+* Ready for production deploy on Vercel
 
 ---
 

@@ -3,20 +3,21 @@ import type { DashboardStats } from "@/types/database";
 
 interface ProfileStatsProps {
   stats: DashboardStats;
+  streakDays?: number;
 }
 
-export function ProfileStats({ stats }: ProfileStatsProps) {
+export function ProfileStats({ stats, streakDays = 0 }: ProfileStatsProps) {
   const focusHours = formatDurationMinutes(stats.total_focus_minutes);
 
   const items = [
     { label: "Courses", value: String(stats.active_courses) },
     { label: "Assignments done", value: String(stats.completed_assignments) },
     { label: "Focus hours", value: focusHours },
-    { label: "Streak", value: "—" },
+    { label: "Streak", value: streakDays > 0 ? `${streakDays}d` : "—" },
   ];
 
   return (
-    <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+    <div className="mt-0 grid grid-cols-2 gap-2.5 sm:grid-cols-4 sm:gap-3">
       {items.map((stat) => (
         <div
           key={stat.label}

@@ -78,11 +78,16 @@ export function Popover({
           role="menu"
           aria-label={label}
           className={cn(
-            "absolute top-full z-[60] mt-1.5 min-w-48 rounded-[var(--radius)] border border-border bg-surface py-1 shadow-lg",
+            "absolute top-full z-[70] mt-1.5 min-w-48 rounded-[var(--radius-lg)] border border-border bg-surface py-1 shadow-lg",
             align === "right" ? "right-0" : "left-0",
             contentClassName,
           )}
-          onClick={() => setOpen(false)}
+          onClick={(event) => {
+            const target = event.target as HTMLElement;
+            if (target.closest("button, a")) {
+              setOpen(false);
+            }
+          }}
         >
           {children}
         </div>

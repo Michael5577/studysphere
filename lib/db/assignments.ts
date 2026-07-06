@@ -199,6 +199,34 @@ export async function getDueSoonAssignments(
   return getUpcomingAssignments(limit);
 }
 
+export async function getDatedAssignments(): Promise<AssignmentWithCourse[]> {
+  const userId = await requireUserId();
+  const supabase = await createClient();
+  const prefs = await getUserPreferences();
+  const showCompleted = prefs?.show_completed_assignments ?? true;
+
+  let query = supabase
+    .from("assignments")
+    .select("*, courses(code, name, color_key)")
+    .eq("user_id", userId)
+    .not("due_at", "is", null)
+    .order("due_at", { ascending: true });
+
+  if (!showCompleted) {
+    query = query.neq("status", "done");
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    throw new Error(formatDbError(error));
+  }
+
+  return (data ?? []).map((row) =>
+    mapAssignmentRow(row as Assignment & { courses: CourseRelation | null }),
+  );
+}
+
 export async function updateAssignmentStatus(
   id: string,
   status: AssignmentStatus,

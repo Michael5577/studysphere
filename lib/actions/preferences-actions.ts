@@ -18,6 +18,8 @@ export interface PreferencesFormInput {
   assignment_reminders?: boolean;
   daily_summary_email?: boolean;
   focus_session_alerts?: boolean;
+  color_scheme?: "light" | "dark" | "system";
+  background_style?: "vivid" | "organic" | "minimal" | "aurora";
 }
 
 function validatePreferencesInput(input: PreferencesFormInput): string | null {
@@ -63,6 +65,20 @@ export async function updatePreferencesAction(
 
     revalidatePath("/settings");
     revalidatePath("/assignments");
+    revalidatePath("/calendar");
+    revalidatePath("/focus");
+
+    if (input.compact_mode !== undefined) {
+      revalidatePath("/", "layout");
+    }
+
+    if (
+      input.color_scheme !== undefined ||
+      input.background_style !== undefined
+    ) {
+      revalidatePath("/", "layout");
+    }
+
     return { ok: true, data: preferences };
   } catch (error) {
     return {

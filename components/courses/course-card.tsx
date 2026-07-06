@@ -15,26 +15,22 @@ export function CourseCard({ course, onEdit }: CourseCardProps) {
   return (
     <Card
       padding="md"
-      className="transition-default hover:border-primary/20"
+      className="surface-card group transition-default max-lg:hover:translate-y-0 lg:hover:-translate-y-px"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <span
-              className={`inline-flex rounded-[var(--radius)] px-2 py-0.5 text-label ${getCourseColorClasses(course.color_key)}`}
-            >
-              {course.code}
-            </span>
-          </div>
-          <h3 className="mt-2 text-sm font-semibold text-text">{course.name}</h3>
+          <span
+            className={`inline-flex rounded-[var(--radius)] px-2 py-0.5 text-label ${getCourseColorClasses(course.color_key)}`}
+          >
+            {course.code}
+          </span>
+          <h3 className="mt-2.5 text-sm font-semibold text-text">{course.name}</h3>
           <p className="mt-1 text-caption">
             {course.instructor || "No instructor listed"}
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-1">
-          <Badge variant="outline">
-            {course.open_assignments_count} open
-          </Badge>
+          <Badge variant="outline">{course.open_assignments_count} open</Badge>
           <CourseActionsMenu course={course} onEdit={onEdit} />
         </div>
       </div>

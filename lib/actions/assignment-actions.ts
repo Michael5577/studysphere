@@ -20,7 +20,7 @@ import {
   ASSIGNMENT_STATUSES,
 } from "@/types/database";
 
-const REVALIDATE_PATHS = ["/assignments", "/dashboard", "/courses"];
+const REVALIDATE_PATHS = ["/assignments", "/dashboard", "/courses", "/calendar"];
 
 function revalidateAssignmentPaths() {
   for (const path of REVALIDATE_PATHS) {

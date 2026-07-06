@@ -18,7 +18,7 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
       <div
         ref={ref}
         className={cn(
-          "rounded-[var(--radius)] border border-border bg-surface",
+          "rounded-[var(--radius-lg)] border border-border/50 bg-surface shadow-[var(--shadow-soft)] transition-default",
           paddingStyles[padding],
           className,
         )}
@@ -37,10 +37,7 @@ export function CardHeader({
   ...props
 }: HTMLAttributes<HTMLDivElement>) {
   return (
-    <div
-      className={cn("flex flex-col gap-1 pb-4", className)}
-      {...props}
-    />
+    <div className={cn("flex flex-col gap-1 pb-4", className)} {...props} />
   );
 }
 
@@ -50,7 +47,7 @@ export function CardTitle({
 }: HTMLAttributes<HTMLHeadingElement>) {
   return (
     <h3
-      className={cn("text-heading text-sm font-semibold", className)}
+      className={cn("font-serif text-heading text-sm font-semibold", className)}
       {...props}
     />
   );

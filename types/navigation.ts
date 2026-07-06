@@ -1,5 +1,6 @@
 import {
   BookOpen,
+  BarChart3,
   Calendar,
   LayoutDashboard,
   ListTodo,
@@ -46,6 +47,12 @@ export const primaryNavItems: NavItem[] = [
     href: "/focus",
     icon: Timer,
     description: "Pomodoro study sessions",
+  },
+  {
+    label: "Analytics",
+    href: "/analytics",
+    icon: BarChart3,
+    description: "Focus trends and workload",
   },
 ];
 

@@ -11,7 +11,7 @@ import type { ActionResult } from "@/types/actions";
 import type { Course, CourseColorKey } from "@/types/database";
 import { COURSE_COLOR_KEYS } from "@/types/database";
 
-const REVALIDATE_PATHS = ["/courses", "/dashboard", "/assignments"];
+const REVALIDATE_PATHS = ["/courses", "/dashboard", "/assignments", "/calendar"];
 
 function revalidateCoursePaths() {
   for (const path of REVALIDATE_PATHS) {

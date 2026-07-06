@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useToast } from "@/components/ui/toast-provider";
 import { updateProfileAction } from "@/lib/actions/profile-actions";
 import type { Profile } from "@/types/database";
 import { useRouter } from "next/navigation";
@@ -15,6 +16,7 @@ interface ProfileFormProps {
 
 export function ProfileForm({ profile }: ProfileFormProps) {
   const router = useRouter();
+  const toast = useToast();
   const [open, setOpen] = useState(false);
   const [fullName, setFullName] = useState(profile.full_name ?? "");
   const [major, setMajor] = useState(profile.major ?? "");
@@ -54,6 +56,7 @@ export function ProfileForm({ profile }: ProfileFormProps) {
       return;
     }
 
+    toast.success("Profile updated");
     setOpen(false);
     router.refresh();
   }

@@ -1,8 +1,11 @@
+import { ActiveCoursesStrip } from "@/components/dashboard/active-courses-strip";
 import { DashboardStats } from "@/components/dashboard/dashboard-stats";
 import { DueSoonList } from "@/components/dashboard/due-soon-list";
+import { PlanMyDayCard } from "@/components/dashboard/plan-my-day-card";
 import { PageContainer } from "@/components/layout/page-container";
 import { SectionHeader } from "@/components/layout/section-header";
 import {
+  getActiveCoursesSummary,
   getDashboardStats,
   getDueSoonAssignments,
 } from "@/lib/db/dashboard";
@@ -15,9 +18,10 @@ export default async function DashboardPage() {
   const userId = await requireUserId();
   await ensureProfile(userId);
 
-  const [stats, dueSoon, profile, supabase] = await Promise.all([
+  const [stats, dueSoon, courses, profile, supabase] = await Promise.all([
     getDashboardStats(),
     getDueSoonAssignments(5),
+    getActiveCoursesSummary(),
     getProfile(),
     createClient(),
   ]);
@@ -40,12 +44,21 @@ export default async function DashboardPage() {
     <PageContainer>
       <div className="section-stack">
         <SectionHeader
+          eyebrow="Dashboard"
           title={`${getGreeting()}, ${displayName}`}
           description={today}
         />
 
         <DashboardStats stats={stats} />
-        <DueSoonList assignments={dueSoon} />
+
+        <div className="grid gap-4 lg:grid-cols-3">
+          <div className="lg:col-span-2">
+            <DueSoonList assignments={dueSoon} />
+          </div>
+          <PlanMyDayCard />
+        </div>
+
+        <ActiveCoursesStrip courses={courses} />
       </div>
     </PageContainer>
   );

@@ -14,12 +14,12 @@ export interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
 }
 
 const variantStyles: Record<BadgeVariant, string> = {
-  default: "bg-background text-muted",
+  default: "bg-muted-surface text-muted",
   primary: "bg-primary-muted text-primary",
-  success: "bg-success/10 text-success",
-  warning: "bg-warning/10 text-warning",
+  success: "bg-primary-muted text-primary",
+  warning: "bg-accent text-accent-foreground",
   error: "bg-error/10 text-error",
-  outline: "bg-surface text-muted border border-border",
+  outline: "bg-surface text-muted border border-border/60",
 };
 
 export function Badge({
@@ -31,8 +31,7 @@ export function Badge({
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-[var(--radius)] px-2 py-0.5",
-        "text-label",
+        "inline-flex items-center rounded-full px-2.5 py-0.5 text-label",
         variantStyles[variant],
         className,
       )}

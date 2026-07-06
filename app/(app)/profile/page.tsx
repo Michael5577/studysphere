@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { PageContainer } from "@/components/layout/page-container";
 import { SectionHeader } from "@/components/layout/section-header";
+import { getAnalyticsSummary } from "@/lib/db/analytics";
 import { getDashboardStats } from "@/lib/db/dashboard";
 import { ensureProfile } from "@/lib/db/profile";
 import { formatMemberSince, getInitials } from "@/lib/format";
@@ -15,8 +16,9 @@ export default async function ProfilePage() {
   const userId = await requireUserId();
   const profile = await ensureProfile(userId);
 
-  const [stats, supabase] = await Promise.all([
+  const [stats, analytics, supabase] = await Promise.all([
     getDashboardStats(),
+    getAnalyticsSummary(),
     createClient(),
   ]);
 
@@ -50,28 +52,32 @@ export default async function ProfilePage() {
       <div className="section-stack">
         <SectionHeader title="Profile" description="Your academic identity" />
 
-        <Card padding="lg">
-          <div className="flex items-start gap-5">
-            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[var(--radius)] bg-primary-muted text-xl font-semibold text-primary">
-              {getInitials(displayName)}
-            </div>
-            <div className="min-w-0">
-              <h2 className="text-lg font-semibold text-text">{displayName}</h2>
-              <p className="mt-0.5 text-caption">
-                {subtitle || "Add your major and year level"}
-              </p>
-              {profile.university && (
-                <Badge variant="primary" className="mt-3">
-                  {profile.university}
-                </Badge>
-              )}
+        <Card padding="lg" className="surface-card overflow-hidden">
+          <div className="border-b border-border bg-primary-muted/40 px-5 py-5 sm:px-6">
+            <div className="flex items-start gap-4">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[var(--radius)] bg-primary text-lg font-semibold text-white shadow-sm">
+                {getInitials(displayName)}
+              </div>
+              <div className="min-w-0">
+                <h2 className="text-lg font-semibold text-text">{displayName}</h2>
+                <p className="mt-0.5 text-caption">
+                  {subtitle || "Add your major and year level"}
+                </p>
+                {profile.university && (
+                  <Badge variant="primary" className="mt-3">
+                    {profile.university}
+                  </Badge>
+                )}
+              </div>
             </div>
           </div>
 
-          <ProfileStats stats={stats} />
+          <div className="px-5 py-5 sm:px-6">
+            <ProfileStats stats={stats} streakDays={analytics.streak_days} />
+          </div>
         </Card>
 
-        <Card padding="none">
+        <Card padding="none" className="surface-card">
           <div className="divide-y divide-border">
             {details.map((item) => (
               <div

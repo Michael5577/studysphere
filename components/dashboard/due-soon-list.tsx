@@ -1,9 +1,10 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { EmptyState } from "@/components/ui/empty-state";
+import { EmptyState, EmptyStateAction } from "@/components/ui/empty-state";
 import { formatDueDate } from "@/lib/format";
 import type { AssignmentWithCourse } from "@/types/database";
 import { ListTodo } from "lucide-react";
+import Link from "next/link";
 
 const priorityVariant = {
   high: "error" as const,
@@ -17,25 +18,30 @@ interface DueSoonListProps {
 
 export function DueSoonList({ assignments }: DueSoonListProps) {
   return (
-    <Card padding="none">
-      <CardHeader className="border-b border-border px-5 py-4">
+    <Card padding="none" className="surface-card">
+      <CardHeader className="border-b border-border px-5 py-3.5">
         <CardTitle>Due soon</CardTitle>
       </CardHeader>
       {assignments.length === 0 ? (
-        <div className="px-5 py-8">
+        <div className="px-5 py-6">
           <EmptyState
             icon={ListTodo}
             title="Nothing due soon"
             description="Open assignments with upcoming due dates will appear here."
-            className="border-none bg-transparent py-8"
+            className="border-none bg-transparent py-6"
+            action={
+              <Link href="/assignments">
+                <EmptyStateAction>Add assignment</EmptyStateAction>
+              </Link>
+            }
           />
         </div>
       ) : (
-        <CardContent className="divide-y divide-border">
+        <CardContent className="divide-y divide-border p-0">
           {assignments.map((assignment) => (
             <div
               key={assignment.id}
-              className="flex items-center justify-between gap-4 px-5 py-4"
+              className="list-row flex items-center justify-between gap-4 px-5 py-3.5"
             >
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium text-text">
@@ -45,7 +51,7 @@ export function DueSoonList({ assignments }: DueSoonListProps) {
                   {assignment.course?.code ?? "Unknown course"}
                 </p>
               </div>
-              <div className="flex shrink-0 items-center gap-3">
+              <div className="flex shrink-0 items-center gap-2 sm:gap-3">
                 <Badge variant={priorityVariant[assignment.priority]}>
                   {assignment.priority}
                 </Badge>

@@ -17,6 +17,7 @@ interface AssignmentsPageClientProps {
   totalCount: number;
   openCount: number;
   completedCount: number;
+  showCompleted: boolean;
 }
 
 export function AssignmentsPageClient({
@@ -25,6 +26,7 @@ export function AssignmentsPageClient({
   totalCount,
   openCount,
   completedCount,
+  showCompleted,
 }: AssignmentsPageClientProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingAssignment, setEditingAssignment] =
@@ -46,7 +48,9 @@ export function AssignmentsPageClient({
   const description =
     totalCount === 0
       ? "No assignments yet"
-      : `${totalCount} total · ${openCount} open · ${completedCount} completed`;
+      : `${totalCount} total · ${openCount} open · ${completedCount} completed${
+          !showCompleted ? " · completed hidden" : ""
+        }`;
 
   return (
     <div className="section-stack">
@@ -97,7 +101,7 @@ export function AssignmentsPageClient({
           }
         />
       ) : (
-        <Card padding="none">
+        <Card padding="none" className="surface-card overflow-hidden">
           <AssignmentList assignments={assignments} onEdit={handleEdit} />
         </Card>
       )}

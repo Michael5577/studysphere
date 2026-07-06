@@ -84,6 +84,10 @@ create table public.user_preferences (
   assignment_reminders boolean not null default true,
   daily_summary_email boolean not null default false,
   focus_session_alerts boolean not null default true,
+  color_scheme text not null default 'system'
+    check (color_scheme in ('light', 'dark', 'system')),
+  background_style text not null default 'vivid'
+    check (background_style in ('vivid', 'organic', 'minimal', 'aurora')),
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now()),
   constraint user_preferences_work_duration_range check (
