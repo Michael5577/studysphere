@@ -6,8 +6,8 @@ import {
   OPENAI_FALLBACK_MODEL,
 } from "@/lib/ai/openai-config";
 import { getAssistantInstructions } from "@/lib/ai/prompts";
-import { generateMockAssistantReply } from "@/lib/ai/mock";
 import type { AssistantMode } from "@/lib/ai/types";
+import { getAssistantUnavailableReply } from "@/lib/ai/unavailable";
 import type OpenAI from "openai";
 
 export interface AssistantHistoryMessage {
@@ -23,14 +23,14 @@ interface GenerateAssistantReplyInput {
 
 export interface GenerateAssistantReplyResult {
   reply: string;
-  source: "openai" | "fallback";
+  source: "openai" | "unconfigured";
 }
 
 function buildInput(
   message: string,
   history: AssistantHistoryMessage[],
 ): OpenAI.Responses.ResponseInput {
-  const items: OpenAI.Responses.ResponseInput = history.slice(-8).map((item) => ({
+  const items: OpenAI.Responses.ResponseInput = history.slice(-12).map((item) => ({
     role: item.role,
     content: item.content,
   }));
@@ -43,6 +43,21 @@ function buildInput(
   return items;
 }
 
+function buildRequestParams(
+  mode: AssistantMode,
+  message: string,
+  history: AssistantHistoryMessage[],
+  model: string,
+) {
+  return {
+    model,
+    instructions: getAssistantInstructions(mode),
+    input: buildInput(message, history),
+    max_output_tokens: 1600,
+    temperature: 0.4,
+  } as const;
+}
+
 async function callOpenAIResponses(
   mode: AssistantMode,
   message: string,
@@ -52,11 +67,8 @@ async function callOpenAIResponses(
   const client = createOpenAIClient();
 
   const response = await client.responses.create({
-    model,
-    instructions: getAssistantInstructions(mode),
-    input: buildInput(message, history),
-    max_output_tokens: 1200,
-    temperature: 0.4,
+    ...buildRequestParams(mode, message, history, model),
+    stream: false,
   });
 
   const text = response.output_text?.trim();
@@ -66,6 +78,47 @@ async function callOpenAIResponses(
   }
 
   return text;
+}
+
+export async function* streamOpenAIResponses(
+  mode: AssistantMode,
+  message: string,
+  history: AssistantHistoryMessage[],
+): AsyncGenerator<string, void, undefined> {
+  const preferredModel = getOpenAIModelPreference();
+  const models = [preferredModel];
+
+  if (preferredModel !== OPENAI_FALLBACK_MODEL) {
+    models.push(OPENAI_FALLBACK_MODEL);
+  }
+
+  let lastError: unknown;
+
+  for (const model of models) {
+    try {
+      const client = createOpenAIClient();
+      const stream = await client.responses.create({
+        ...buildRequestParams(mode, message, history, model),
+        stream: true,
+      });
+
+      for await (const event of stream) {
+        if (event.type === "response.output_text.delta" && event.delta) {
+          yield event.delta;
+        }
+      }
+
+      return;
+    } catch (error) {
+      lastError = error;
+
+      if (!isOpenAIModelUnavailableError(error)) {
+        throw error;
+      }
+    }
+  }
+
+  throw lastError ?? new Error("No OpenAI model available.");
 }
 
 async function callOpenAIWithModelFallback(
@@ -104,8 +157,8 @@ export async function generateAssistantReply(
 
   if (!getOpenAIApiKey()) {
     return {
-      reply: generateMockAssistantReply(input.mode, input.message),
-      source: "fallback",
+      reply: getAssistantUnavailableReply(),
+      source: "unconfigured",
     };
   }
 

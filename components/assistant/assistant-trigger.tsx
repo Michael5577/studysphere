@@ -3,7 +3,7 @@
 import { useAssistant } from "@/components/assistant/assistant-provider";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { ASSISTANT_MODE_LABELS, type AssistantMode } from "@/lib/ai/types";
+import { ASSISTANT_MODE_LABELS, ASSISTANT_MODES, type AssistantMode } from "@/lib/ai/types";
 import { Sparkles } from "lucide-react";
 
 interface AssistantTriggerProps {
@@ -40,7 +40,7 @@ export function AssistantTrigger({
               AI Assistant
             </span>
             <span className="mt-0.5 block text-xs text-muted">
-              Ask, summarize, flashcards
+              Chat, summarize, quiz &amp; more
             </span>
           </span>
           <kbd className="hidden rounded-md border border-border bg-surface px-1.5 py-0.5 font-mono text-[10px] text-muted xl:inline">
@@ -79,15 +79,16 @@ export function AssistantModeTabs({
   onChange,
   className,
 }: AssistantModeTabsProps) {
-  const modes: AssistantMode[] = ["chat", "summarize", "flashcards"];
-
   return (
     <div
-      className={cn("flex gap-1 rounded-full bg-muted-surface p-1", className)}
+      className={cn(
+        "flex gap-1 overflow-x-auto rounded-full bg-muted-surface p-1 [-webkit-overflow-scrolling:touch]",
+        className,
+      )}
       role="tablist"
       aria-label="Assistant mode"
     >
-      {modes.map((item) => (
+      {ASSISTANT_MODES.map((item) => (
         <button
           key={item}
           type="button"
@@ -95,7 +96,7 @@ export function AssistantModeTabs({
           aria-selected={mode === item}
           onClick={() => onChange(item)}
           className={cn(
-            "flex-1 rounded-full px-3 py-1.5 text-xs font-semibold transition-default focus-ring",
+            "shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition-default focus-ring",
             mode === item
               ? "bg-surface text-primary shadow-[var(--shadow-subtle)]"
               : "text-muted hover:text-text",

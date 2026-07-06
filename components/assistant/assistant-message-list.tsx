@@ -1,5 +1,6 @@
 "use client";
 
+import { AssistantMarkdown } from "@/components/assistant/assistant-markdown";
 import type { AssistantMessage } from "@/lib/ai/types";
 import { cn } from "@/lib/utils";
 import { useEffect, useRef } from "react";
@@ -7,19 +8,23 @@ import { useEffect, useRef } from "react";
 interface AssistantMessageListProps {
   messages: AssistantMessage[];
   isLoading: boolean;
+  isStreaming?: boolean;
   isOffline?: boolean;
 }
 
 export function AssistantMessageList({
   messages,
   isLoading,
+  isStreaming = false,
   isOffline = false,
 }: AssistantMessageListProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [messages, isLoading]);
+  }, [messages, isLoading, isStreaming]);
+
+  const showThinking = isLoading && !isStreaming;
 
   return (
     <div className="assistant-messages flex min-h-0 flex-1 flex-col overflow-x-hidden overflow-y-auto overscroll-contain px-3 py-2 [-webkit-overflow-scrolling:touch] sm:px-4 sm:py-3">
@@ -34,24 +39,41 @@ export function AssistantMessageList({
             >
               <div
                 className={cn(
-                  "w-fit max-w-[92%] rounded-2xl px-3.5 py-2.5 text-[15px] leading-[1.5] sm:max-w-[85%] sm:px-4 sm:py-3",
+                  "w-fit max-w-[92%] rounded-2xl px-3.5 py-2.5 sm:max-w-[85%] sm:px-4 sm:py-3",
                   isUser
-                    ? "rounded-br-md bg-primary text-primary-foreground"
+                    ? "rounded-br-md bg-primary text-[15px] leading-[1.5] text-primary-foreground"
                     : "rounded-bl-md bg-muted-surface text-text",
+                  message.error && isUser && "opacity-70",
                 )}
               >
-                {!isUser && isOffline && (
+                {!isUser && isOffline && !message.streaming && (
                   <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">
                     Offline
                   </p>
                 )}
-                <p className="whitespace-pre-wrap break-words">{message.content}</p>
+                {isUser ? (
+                  <p className="whitespace-pre-wrap break-words">{message.content}</p>
+                ) : message.content ? (
+                  <AssistantMarkdown content={message.content} />
+                ) : message.streaming ? (
+                  <div className="assistant-typing flex items-center gap-1.5 py-1">
+                    <span />
+                    <span />
+                    <span />
+                  </div>
+                ) : null}
+                {!isUser && message.streaming && message.content && (
+                  <span
+                    className="ml-0.5 inline-block h-4 w-0.5 animate-pulse bg-primary/70 align-middle"
+                    aria-hidden
+                  />
+                )}
               </div>
             </div>
           );
         })}
 
-        {isLoading && (
+        {showThinking && (
           <div className="flex w-full justify-start" aria-live="polite" aria-busy="true">
             <div className="w-fit max-w-[92%] rounded-2xl rounded-bl-md bg-muted-surface px-3.5 py-2.5 sm:max-w-[85%] sm:px-4 sm:py-3">
               <p className="text-sm font-medium text-text">Thinking…</p>

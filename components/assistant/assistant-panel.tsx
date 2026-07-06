@@ -10,13 +10,14 @@ import { Button } from "@/components/ui/button";
 import { ASSISTANT_MODE_LABELS } from "@/lib/ai/types";
 import { cn } from "@/lib/utils";
 import { lockBodyScroll, unlockBodyScroll } from "@/lib/body-scroll-lock";
-import { X } from "lucide-react";
+import { RotateCcw, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 const MODE_PLACEHOLDERS = {
   chat: "Ask anything about your coursework…",
   summarize: "Paste notes or describe what to summarize…",
   flashcards: "What topic should I create flashcards for?",
+  quiz: "What topic should I quiz you on?",
 } as const;
 
 const OFFLINE_BANNER_KEY = "studysphere-assistant-offline-banner-dismissed";
@@ -35,11 +36,13 @@ export function AssistantPanel() {
     mode,
     messagesByMode,
     isLoading,
+    isStreaming,
     error,
-    isPreviewMode,
+    isLive,
     setMode,
     closeAssistant,
     sendMessage,
+    retryLastMessage,
     clearError,
   } = useAssistant();
 
@@ -163,7 +166,7 @@ export function AssistantPanel() {
 
           <AssistantModeTabs mode={mode} onChange={setMode} className="mt-2" />
 
-          {isPreviewMode && !offlineBannerDismissed && (
+          {!isLive && !offlineBannerDismissed && (
             <AssistantOfflineBanner
               onDismiss={dismissOfflineBanner}
               className="mt-2"
@@ -178,27 +181,39 @@ export function AssistantPanel() {
               className="mx-3 mt-2 flex shrink-0 items-start justify-between gap-2 rounded-lg border border-error/25 bg-error/5 px-3 py-2 text-sm text-error sm:mx-4"
             >
               <span className="min-w-0 leading-snug">{error}</span>
-              <button
-                type="button"
-                onClick={clearError}
-                className="shrink-0 text-xs font-semibold underline focus-ring"
-              >
-                Dismiss
-              </button>
+              <div className="flex shrink-0 items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => void retryLastMessage()}
+                  className="inline-flex items-center gap-1 text-xs font-semibold underline focus-ring"
+                >
+                  <RotateCcw className="h-3 w-3" />
+                  Retry
+                </button>
+                <button
+                  type="button"
+                  onClick={clearError}
+                  className="text-xs font-semibold underline focus-ring"
+                >
+                  Dismiss
+                </button>
+              </div>
             </div>
           )}
 
           {messages.length === 0 ? (
             <AssistantEmptyState
+              mode={mode}
               onSelectPrompt={(prompt) => void sendMessage(prompt)}
               disabled={isLoading}
-              isOffline={isPreviewMode}
+              isOffline={!isLive}
             />
           ) : (
             <AssistantMessageList
               messages={messages}
               isLoading={isLoading}
-              isOffline={isPreviewMode}
+              isStreaming={isStreaming}
+              isOffline={!isLive}
             />
           )}
         </div>

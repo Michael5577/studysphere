@@ -7,6 +7,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -15,13 +16,15 @@ interface AssistantApiConfig {
   live: boolean;
 }
 
-interface AssistantApiResponse {
-  reply: string;
-  source: "openai" | "fallback";
+interface AssistantHistoryItem {
+  role: "user" | "assistant";
+  content: string;
 }
 
-interface AssistantApiError {
-  error: string;
+interface RetryPayload {
+  mode: AssistantMode;
+  message: string;
+  history: AssistantHistoryItem[];
 }
 
 interface AssistantContextValue {
@@ -29,23 +32,30 @@ interface AssistantContextValue {
   mode: AssistantMode;
   messagesByMode: Record<AssistantMode, AssistantMessage[]>;
   isLoading: boolean;
+  isStreaming: boolean;
   error: string | null;
-  isPreviewMode: boolean;
+  isLive: boolean;
   setMode: (mode: AssistantMode) => void;
   openAssistant: () => void;
   closeAssistant: () => void;
   toggleAssistant: () => void;
   sendMessage: (content: string) => Promise<void>;
+  retryLastMessage: () => Promise<void>;
   clearError: () => void;
 }
 
 const AssistantContext = createContext<AssistantContextValue | null>(null);
 
-function createMessage(role: AssistantMessage["role"], content: string): AssistantMessage {
+function createMessage(
+  role: AssistantMessage["role"],
+  content: string,
+  extra?: Partial<AssistantMessage>,
+): AssistantMessage {
   return {
     id: `${role}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     role,
     content,
+    ...extra,
   };
 }
 
@@ -53,6 +63,7 @@ const emptyMessages = (): Record<AssistantMode, AssistantMessage[]> => ({
   chat: [],
   summarize: [],
   flashcards: [],
+  quiz: [],
 });
 
 interface AssistantProviderProps {
@@ -65,8 +76,11 @@ export function AssistantProvider({ children }: AssistantProviderProps) {
   const [messagesByMode, setMessagesByMode] =
     useState<Record<AssistantMode, AssistantMessage[]>>(emptyMessages);
   const [isLoading, setIsLoading] = useState(false);
+  const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isPreviewMode, setIsPreviewMode] = useState(true);
+  const [isLive, setIsLive] = useState(false);
+  const retryPayloadRef = useRef<RetryPayload | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     void fetch("/api/assistant")
@@ -79,7 +93,7 @@ export function AssistantProvider({ children }: AssistantProviderProps) {
       })
       .then((data) => {
         if (data) {
-          setIsPreviewMode(!data.live);
+          setIsLive(data.live);
         }
       });
   }, []);
@@ -116,6 +130,158 @@ export function AssistantProvider({ children }: AssistantProviderProps) {
     return () => document.removeEventListener("keydown", handleEscape);
   }, [open]);
 
+  useEffect(() => {
+    return () => {
+      abortRef.current?.abort();
+    };
+  }, []);
+
+  const dispatchMessage = useCallback(
+    async (activeMode: AssistantMode, trimmed: string, history: AssistantHistoryItem[]) => {
+      setError(null);
+      retryPayloadRef.current = { mode: activeMode, message: trimmed, history };
+
+      const userMessage = createMessage("user", trimmed);
+      const assistantId = createMessage("assistant", "", { streaming: true }).id;
+
+      setMessagesByMode((current) => ({
+        ...current,
+        [activeMode]: [
+          ...current[activeMode],
+          userMessage,
+          createMessage("assistant", "", { id: assistantId, streaming: true }),
+        ],
+      }));
+
+      setIsLoading(true);
+      setIsStreaming(true);
+
+      abortRef.current?.abort();
+      const controller = new AbortController();
+      abortRef.current = controller;
+
+      try {
+        const response = await fetch("/api/assistant", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            mode: activeMode,
+            message: trimmed,
+            history,
+            stream: true,
+          }),
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          const payload = (await response.json()) as { error?: string };
+          throw new Error(payload.error ?? "Unable to reach the assistant.");
+        }
+
+        if (!response.body) {
+          throw new Error("No response stream received.");
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+        let fullReply = "";
+        let source: "openai" | "unconfigured" = "openai";
+
+        while (true) {
+          const { done, value } = await reader.read();
+
+          if (done) {
+            break;
+          }
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop() ?? "";
+
+          for (const line of lines) {
+            if (!line.startsWith("data: ")) {
+              continue;
+            }
+
+            const payload = JSON.parse(line.slice(6)) as {
+              delta?: string;
+              error?: string;
+              done?: boolean;
+              source?: "openai" | "unconfigured";
+            };
+
+            if (payload.source === "unconfigured") {
+              source = "unconfigured";
+              setIsLive(false);
+            }
+
+            if (payload.error) {
+              throw new Error(payload.error);
+            }
+
+            if (payload.delta) {
+              fullReply += payload.delta;
+
+              setMessagesByMode((current) => ({
+                ...current,
+                [activeMode]: current[activeMode].map((item) =>
+                  item.id === assistantId
+                    ? { ...item, content: fullReply, streaming: !payload.done }
+                    : item,
+                ),
+              }));
+            }
+
+            if (payload.done) {
+              setMessagesByMode((current) => ({
+                ...current,
+                [activeMode]: current[activeMode].map((item) =>
+                  item.id === assistantId
+                    ? { ...item, content: fullReply, streaming: false }
+                    : item,
+                ),
+              }));
+            }
+          }
+        }
+
+        if (!fullReply.trim()) {
+          throw new Error("No response received. Please try again.");
+        }
+
+        if (source === "openai") {
+          setIsLive(true);
+          retryPayloadRef.current = null;
+        }
+      } catch (cause) {
+        if (cause instanceof DOMException && cause.name === "AbortError") {
+          return;
+        }
+
+        const message =
+          cause instanceof Error
+            ? cause.message
+            : "Unable to reach the assistant. Please try again.";
+
+        setError(message);
+
+        setMessagesByMode((current) => ({
+          ...current,
+          [activeMode]: current[activeMode]
+            .filter((item) => item.id !== assistantId)
+            .map((item) =>
+              item.id === userMessage.id ? { ...item, error: true } : item,
+            ),
+        }));
+      } finally {
+        setIsLoading(false);
+        setIsStreaming(false);
+      }
+    },
+    [],
+  );
+
   const sendMessage = useCallback(
     async (content: string) => {
       const trimmed = content.trim();
@@ -124,69 +290,37 @@ export function AssistantProvider({ children }: AssistantProviderProps) {
         return;
       }
 
-      setError(null);
-
       const history = messagesByMode[mode]
-        .slice(-8)
+        .filter((item) => !item.error && !item.streaming)
+        .slice(-12)
         .map((item) => ({
           role: item.role,
           content: item.content,
         }));
 
-      const userMessage = createMessage("user", trimmed);
-
-      setMessagesByMode((current) => ({
-        ...current,
-        [mode]: [...current[mode], userMessage],
-      }));
-
-      setIsLoading(true);
-
-      try {
-        const response = await fetch("/api/assistant", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            mode,
-            message: trimmed,
-            history,
-          }),
-        });
-
-        const payload = (await response.json()) as
-          | AssistantApiResponse
-          | AssistantApiError;
-
-        if (!response.ok) {
-          setError(
-            "error" in payload
-              ? payload.error
-              : "Unable to reach the assistant. Please try again.",
-          );
-          return;
-        }
-
-        if (!("reply" in payload)) {
-          setError("No response received. Please try again.");
-          return;
-        }
-
-        setIsPreviewMode(payload.source === "fallback");
-
-        const assistantMessage = createMessage("assistant", payload.reply);
-
-        setMessagesByMode((current) => ({
-          ...current,
-          [mode]: [...current[mode], assistantMessage],
-        }));
-      } catch {
-        setError("Unable to reach the assistant. Please try again.");
-      } finally {
-        setIsLoading(false);
-      }
+      await dispatchMessage(mode, trimmed, history);
     },
-    [isLoading, mode, messagesByMode],
+    [dispatchMessage, isLoading, mode, messagesByMode],
   );
+
+  const retryLastMessage = useCallback(async () => {
+    const payload = retryPayloadRef.current;
+
+    if (!payload || isLoading) {
+      return;
+    }
+
+    setError(null);
+
+    setMessagesByMode((current) => ({
+      ...current,
+      [payload.mode]: current[payload.mode].filter(
+        (item) => !item.error && !item.streaming,
+      ),
+    }));
+
+    await dispatchMessage(payload.mode, payload.message, payload.history);
+  }, [dispatchMessage, isLoading]);
 
   const value = useMemo(
     () => ({
@@ -194,13 +328,15 @@ export function AssistantProvider({ children }: AssistantProviderProps) {
       mode,
       messagesByMode,
       isLoading,
+      isStreaming,
       error,
-      isPreviewMode,
+      isLive,
       setMode,
       openAssistant,
       closeAssistant,
       toggleAssistant,
       sendMessage,
+      retryLastMessage,
       clearError,
     }),
     [
@@ -208,12 +344,14 @@ export function AssistantProvider({ children }: AssistantProviderProps) {
       mode,
       messagesByMode,
       isLoading,
+      isStreaming,
       error,
-      isPreviewMode,
+      isLive,
       openAssistant,
       closeAssistant,
       toggleAssistant,
       sendMessage,
+      retryLastMessage,
       clearError,
     ],
   );

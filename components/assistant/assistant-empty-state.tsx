@@ -1,20 +1,24 @@
 "use client";
 
-import { EXAMPLE_PROMPTS } from "@/lib/ai/types";
+import { EXAMPLE_PROMPTS, type AssistantMode } from "@/lib/ai/types";
 import { cn } from "@/lib/utils";
 import { Sparkles } from "lucide-react";
 
 interface AssistantEmptyStateProps {
+  mode: AssistantMode;
   onSelectPrompt: (prompt: string) => void;
   disabled?: boolean;
   isOffline?: boolean;
 }
 
 export function AssistantEmptyState({
+  mode,
   onSelectPrompt,
   disabled = false,
   isOffline = false,
 }: AssistantEmptyStateProps) {
+  const prompts = EXAMPLE_PROMPTS[mode];
+
   return (
     <div className="assistant-empty flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-3 py-6 sm:px-4">
       <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center">
@@ -27,12 +31,12 @@ export function AssistantEmptyState({
         </h3>
         <p className="mt-1.5 max-w-sm text-sm leading-relaxed text-muted">
           {isOffline
-            ? "Try a demo prompt below, or add OPENAI_API_KEY for live answers."
-            : "Ask questions, summarize notes, or generate flashcards."}
+            ? "Add OPENAI_API_KEY to your environment to enable live AI tutoring."
+            : "Explain concepts, summarize notes, build flashcards, or take a practice quiz."}
         </p>
 
         <div className="mt-5 flex w-full flex-col gap-2">
-          {EXAMPLE_PROMPTS.map((prompt) => (
+          {prompts.map((prompt) => (
             <button
               key={prompt}
               type="button"

@@ -727,6 +727,14 @@ body[data-assistant-open="true"] .app-mobile-nav {
   }
 }
 
+.assistant-markdown :where(p, ul, ol, pre, blockquote, h1, h2, h3, h4):first-child {
+  margin-top: 0;
+}
+
+.assistant-markdown :where(p, ul, ol, pre, blockquote, h1, h2, h3, h4):last-child {
+  margin-bottom: 0;
+}
+
 @media (prefers-reduced-motion: no-preference) {
   .ambient-chip-live {
     box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary) 25%, transparent),

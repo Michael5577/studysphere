@@ -1,8 +1,14 @@
 import {
   generateAssistantReply,
+  streamOpenAIResponses,
   type AssistantHistoryMessage,
 } from "@/lib/ai/provider";
-import { getOpenAIErrorMessage, isAssistantLive } from "@/lib/ai/openai-config";
+import {
+  getOpenAIApiKey,
+  getOpenAIErrorMessage,
+  isAssistantLive,
+} from "@/lib/ai/openai-config";
+import { getAssistantUnavailableReply } from "@/lib/ai/unavailable";
 import { ASSISTANT_MODES, type AssistantMode } from "@/lib/ai/types";
 import { requireUserId } from "@/lib/db/auth";
 import { NextResponse } from "next/server";
@@ -29,7 +35,11 @@ function parseHistory(value: unknown): AssistantHistoryMessage[] {
         (item.role === "user" || item.role === "assistant") &&
         typeof item.content === "string",
     )
-    .slice(-8);
+    .slice(-12);
+}
+
+function sseData(payload: Record<string, unknown>): Uint8Array {
+  return new TextEncoder().encode(`data: ${JSON.stringify(payload)}\n\n`);
 }
 
 export async function GET() {
@@ -60,6 +70,7 @@ export async function POST(request: Request) {
       mode?: unknown;
       message?: unknown;
       history?: unknown;
+      stream?: unknown;
     };
 
     if (!isAssistantMode(body.mode)) {
@@ -88,11 +99,74 @@ export async function POST(request: Request) {
       );
     }
 
+    const mode = body.mode;
+    const history = parseHistory(body.history);
+    const wantsStream = body.stream === true;
+
+    if (!getOpenAIApiKey()) {
+      const reply = getAssistantUnavailableReply();
+
+      if (wantsStream) {
+        const stream = new ReadableStream({
+          start(controller) {
+            controller.enqueue(
+              sseData({ delta: reply, source: "unconfigured", done: true }),
+            );
+            controller.close();
+          },
+        });
+
+        return new Response(stream, {
+          headers: {
+            "Content-Type": "text/event-stream",
+            "Cache-Control": "no-cache, no-transform",
+            Connection: "keep-alive",
+          },
+        });
+      }
+
+      return NextResponse.json({ reply, source: "unconfigured" });
+    }
+
+    if (wantsStream) {
+      const stream = new ReadableStream({
+        async start(controller) {
+          try {
+            controller.enqueue(sseData({ source: "openai" }));
+
+            for await (const delta of streamOpenAIResponses(
+              mode,
+              message,
+              history,
+            )) {
+              controller.enqueue(sseData({ delta }));
+            }
+
+            controller.enqueue(sseData({ done: true }));
+          } catch (error) {
+            controller.enqueue(
+              sseData({ error: getOpenAIErrorMessage(error), done: true }),
+            );
+          } finally {
+            controller.close();
+          }
+        },
+      });
+
+      return new Response(stream, {
+        headers: {
+          "Content-Type": "text/event-stream",
+          "Cache-Control": "no-cache, no-transform",
+          Connection: "keep-alive",
+        },
+      });
+    }
+
     try {
       const { reply, source } = await generateAssistantReply({
-        mode: body.mode,
+        mode,
         message,
-        history: parseHistory(body.history),
+        history,
       });
 
       return NextResponse.json({ reply, source });
