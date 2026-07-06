@@ -90,6 +90,7 @@ Create a test user via the signup page, or add one in **Supabase → Authenticat
 | `npm run build` | Production build |
 | `npm run start` | Start production server |
 | `npm run lint` | Run ESLint |
+| `npm test` | Run lint + production build |
 | `npm run icons` | Regenerate all icons (PNG, ICO) from `public/icon.svg` |
 
 ## Deployment (Vercel)
@@ -99,9 +100,12 @@ Create a test user via the signup page, or add one in **Supabase → Authenticat
 3. Add environment variables:
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - `OPENAI_API_KEY` (server-side only — powers the AI assistant)
 4. Deploy
 
 Ensure the Supabase schema is applied to your production project before testing.
+
+After adding or changing `OPENAI_API_KEY`, redeploy production so the assistant uses live OpenAI responses (defaults to `gpt-5.5` with fallback to `gpt-4.1-mini`).
 
 ### Post-deploy checklist
 
