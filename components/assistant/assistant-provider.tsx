@@ -186,7 +186,7 @@ export function AssistantProvider({ children }: AssistantProviderProps) {
         const decoder = new TextDecoder();
         let buffer = "";
         let fullReply = "";
-        let source: "openai" | "unconfigured" = "openai";
+        let source: "openai" | "nvidia-deepseek" | "unconfigured" = "openai";
 
         while (true) {
           const { done, value } = await reader.read();
@@ -208,12 +208,18 @@ export function AssistantProvider({ children }: AssistantProviderProps) {
               delta?: string;
               error?: string;
               done?: boolean;
-              source?: "openai" | "unconfigured";
+              source?: "openai" | "nvidia-deepseek" | "unconfigured";
             };
 
             if (payload.source === "unconfigured") {
               source = "unconfigured";
               setIsLive(false);
+            } else if (
+              payload.source === "openai" ||
+              payload.source === "nvidia-deepseek"
+            ) {
+              source = payload.source;
+              setIsLive(true);
             }
 
             if (payload.error) {
@@ -250,7 +256,7 @@ export function AssistantProvider({ children }: AssistantProviderProps) {
           throw new Error("No response received. Please try again.");
         }
 
-        if (source === "openai") {
+        if (source === "openai" || source === "nvidia-deepseek") {
           setIsLive(true);
           retryPayloadRef.current = null;
         }

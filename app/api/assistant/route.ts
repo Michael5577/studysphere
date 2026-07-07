@@ -1,14 +1,15 @@
 import {
   generateAssistantReply,
-  streamOpenAIResponses,
+  streamAssistantReply,
   type AssistantHistoryMessage,
 } from "@/lib/ai/provider";
 import {
-  getOpenAIApiKey,
-  getOpenAIErrorMessage,
+  getAIErrorMessage,
+  getPrimaryProviderLabel,
   isAssistantLive,
-} from "@/lib/ai/openai-config";
+} from "@/lib/ai/assistant-config";
 import { getAssistantUnavailableReply } from "@/lib/ai/unavailable";
+import type { AssistantSource } from "@/lib/ai/providers/types";
 import { ASSISTANT_MODES, type AssistantMode } from "@/lib/ai/types";
 import { requireUserId } from "@/lib/db/auth";
 import { NextResponse } from "next/server";
@@ -48,6 +49,7 @@ export async function GET() {
 
     return NextResponse.json({
       live: isAssistantLive(),
+      provider: getPrimaryProviderLabel(),
     });
   } catch (error) {
     return NextResponse.json(
@@ -102,8 +104,9 @@ export async function POST(request: Request) {
     const mode = body.mode;
     const history = parseHistory(body.history);
     const wantsStream = body.stream === true;
+    const input = { mode, message, history };
 
-    if (!getOpenAIApiKey()) {
+    if (!isAssistantLive()) {
       const reply = getAssistantUnavailableReply();
 
       if (wantsStream) {
@@ -132,20 +135,21 @@ export async function POST(request: Request) {
       const stream = new ReadableStream({
         async start(controller) {
           try {
-            controller.enqueue(sseData({ source: "openai" }));
+            let activeSource: AssistantSource | undefined;
 
-            for await (const delta of streamOpenAIResponses(
-              mode,
-              message,
-              history,
-            )) {
-              controller.enqueue(sseData({ delta }));
+            for await (const chunk of streamAssistantReply(input)) {
+              if (!activeSource && chunk.source !== "unconfigured") {
+                activeSource = chunk.source;
+                controller.enqueue(sseData({ source: activeSource }));
+              }
+
+              controller.enqueue(sseData({ delta: chunk.delta }));
             }
 
             controller.enqueue(sseData({ done: true }));
           } catch (error) {
             controller.enqueue(
-              sseData({ error: getOpenAIErrorMessage(error), done: true }),
+              sseData({ error: getAIErrorMessage(error), done: true }),
             );
           } finally {
             controller.close();
@@ -163,16 +167,12 @@ export async function POST(request: Request) {
     }
 
     try {
-      const { reply, source } = await generateAssistantReply({
-        mode,
-        message,
-        history,
-      });
+      const { reply, source } = await generateAssistantReply(input);
 
       return NextResponse.json({ reply, source });
     } catch (error) {
       return NextResponse.json(
-        { error: getOpenAIErrorMessage(error) },
+        { error: getAIErrorMessage(error) },
         { status: 502 },
       );
     }

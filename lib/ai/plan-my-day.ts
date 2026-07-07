@@ -1,15 +1,10 @@
 import type { AssignmentWithCourse } from "@/types/database";
-import {
-  createOpenAIClient,
-  getOpenAIApiKey,
-  getOpenAIModelPreference,
-  isOpenAIModelUnavailableError,
-  OPENAI_FALLBACK_MODEL,
-} from "@/lib/ai/openai-config";
+import { isAssistantLive } from "@/lib/ai/assistant-config";
+import { generateAssistantText } from "@/lib/ai/providers/router";
 
 export interface PlanMyDayResult {
   plan: string;
-  source: "openai" | "fallback";
+  source: "openai" | "nvidia-deepseek" | "fallback";
 }
 
 const PLAN_INSTRUCTIONS = [
@@ -87,7 +82,7 @@ function buildFallbackPlan(assignments: AssignmentWithCourse[]): string {
   });
 
   const lines = [
-    "Offline plan — add OPENAI_API_KEY for a personalized AI plan.",
+    "Offline plan — add NVIDIA_API_KEY or OPENAI_API_KEY for a personalized AI plan.",
     "",
     "Today's priority order:",
   ];
@@ -124,57 +119,12 @@ function buildAssignmentContext(assignments: AssignmentWithCourse[]): string {
   );
 }
 
-async function callOpenAIPlan(context: string, model: string): Promise<string> {
-  const client = createOpenAIClient();
-
-  const response = await client.responses.create({
-    model,
-    instructions: PLAN_INSTRUCTIONS,
-    input: `${context}\n\nCreate today's study plan.`,
-    max_output_tokens: 700,
-    temperature: 0.35,
-  });
-
-  const text = response.output_text?.trim();
-
-  if (!text) {
-    throw new Error("OpenAI returned an empty plan.");
-  }
-
-  return text;
-}
-
-async function callOpenAIPlanWithFallback(context: string): Promise<string> {
-  const preferredModel = getOpenAIModelPreference();
-  const models = [preferredModel];
-
-  if (preferredModel !== OPENAI_FALLBACK_MODEL) {
-    models.push(OPENAI_FALLBACK_MODEL);
-  }
-
-  let lastError: unknown;
-
-  for (const model of models) {
-    try {
-      return await callOpenAIPlan(context, model);
-    } catch (error) {
-      lastError = error;
-
-      if (!isOpenAIModelUnavailableError(error)) {
-        throw error;
-      }
-    }
-  }
-
-  throw lastError ?? new Error("No OpenAI model available.");
-}
-
 export async function generatePlanMyDay(
   assignments: AssignmentWithCourse[],
 ): Promise<PlanMyDayResult> {
   const context = buildAssignmentContext(assignments);
 
-  if (!getOpenAIApiKey()) {
+  if (!isAssistantLive()) {
     return {
       plan: buildFallbackPlan(assignments),
       source: "fallback",
@@ -182,11 +132,16 @@ export async function generatePlanMyDay(
   }
 
   try {
-    const plan = await callOpenAIPlanWithFallback(context);
+    const { text, source } = await generateAssistantText({
+      instructions: PLAN_INSTRUCTIONS,
+      prompt: `${context}\n\nCreate today's study plan.`,
+      maxTokens: 700,
+      temperature: 0.35,
+    });
 
     return {
-      plan,
-      source: "openai",
+      plan: text,
+      source: source === "unconfigured" ? "fallback" : source,
     };
   } catch {
     return {
