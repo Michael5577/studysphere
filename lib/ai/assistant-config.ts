@@ -133,11 +133,28 @@ export function getAIErrorMessage(error: unknown): string {
       return "OpenAI quota exceeded. Use AI_PROVIDER=nvidia with NVIDIA_API_KEY, or add billing at platform.openai.com.";
     }
 
-    if (error.status === 400) {
-      return "The AI provider could not process that request. Try rephrasing your question.";
+    return `AI provider error (${error.status}): ${error.message}`;
+  }
+
+  if (
+    error instanceof Error &&
+    error.name === "NvidiaApiError" &&
+    "status" in error &&
+    typeof error.status === "number"
+  ) {
+    const message = error.message.trim();
+
+    if (error.status === 401) {
+      return "NVIDIA rejected the API key. Verify NVIDIA_API_KEY in Vercel Production settings.";
     }
 
-    return `AI provider error (${error.status}): ${error.message}`;
+    if (error.status === 429) {
+      return "NVIDIA rate limit reached. Wait a moment and try again.";
+    }
+
+    return message
+      ? `NVIDIA error (${error.status}): ${message}`
+      : `NVIDIA error (${error.status}).`;
   }
 
   if (error instanceof Error) {

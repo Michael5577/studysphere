@@ -5,6 +5,9 @@ import {
 } from "@/lib/ai/provider";
 import {
   getAIErrorMessage,
+  getAIProviderPreference,
+  getNvidiaApiKey,
+  getOpenAIApiKey,
   getPrimaryProviderLabel,
   isAssistantLive,
 } from "@/lib/ai/assistant-config";
@@ -50,6 +53,9 @@ export async function GET() {
     return NextResponse.json({
       live: isAssistantLive(),
       provider: getPrimaryProviderLabel(),
+      preference: getAIProviderPreference(),
+      nvidiaConfigured: Boolean(getNvidiaApiKey()),
+      openaiConfigured: Boolean(getOpenAIApiKey()),
     });
   } catch (error) {
     return NextResponse.json(
@@ -148,6 +154,7 @@ export async function POST(request: Request) {
 
             controller.enqueue(sseData({ done: true }));
           } catch (error) {
+            console.error("[assistant] stream failed", error);
             controller.enqueue(
               sseData({ error: getAIErrorMessage(error), done: true }),
             );
@@ -171,6 +178,7 @@ export async function POST(request: Request) {
 
       return NextResponse.json({ reply, source });
     } catch (error) {
+      console.error("[assistant] completion failed", error);
       return NextResponse.json(
         { error: getAIErrorMessage(error) },
         { status: 502 },
