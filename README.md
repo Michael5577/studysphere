@@ -97,15 +97,28 @@ Create a test user via the signup page, or add one in **Supabase → Authenticat
 
 1. Push the repo to GitHub
 2. Import the project in [Vercel](https://vercel.com)
-3. Add environment variables:
-   - `NEXT_PUBLIC_SUPABASE_URL`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - `OPENAI_API_KEY` (server-side only — powers the AI assistant)
-4. Deploy
+3. Add environment variables (Production + Preview):
+
+   | Variable | Purpose |
+   |----------|---------|
+   | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
+   | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Legacy anon key (`eyJ...`) from Supabase → API Keys |
+   | `NVIDIA_API_KEY` | NVIDIA Build API key (`nvapi-...`) — powers the AI assistant |
+   | `AI_PROVIDER` | Set to `nvidia` (recommended) |
+
+   Optional fallback: `OPENAI_API_KEY` + `AI_PROVIDER=auto`
+
+4. Deploy from branch `main`
 
 Ensure the Supabase schema is applied to your production project before testing.
 
-After adding or changing `OPENAI_API_KEY`, redeploy production so the assistant uses live OpenAI responses (defaults to `gpt-5.5` with fallback to `gpt-4.1-mini`).
+**After changing any env var**, redeploy the latest Production deployment so the new values take effect.
+
+### AI assistant (NVIDIA DeepSeek V4 Flash)
+
+- Server route: `/api/assistant` (never expose API keys to the client)
+- Model: `deepseek-ai/deepseek-v4-flash` via `integrate.api.nvidia.com`
+- Get a free key at [build.nvidia.com](https://build.nvidia.com) → DeepSeek V4 Flash → Get API Key
 
 ### Post-deploy checklist
 
@@ -114,7 +127,10 @@ After adding or changing `OPENAI_API_KEY`, redeploy production so the assistant 
 - [ ] Calendar shows dated assignments
 - [ ] Focus timer saves a session
 - [ ] Settings toggles persist
+- [ ] AI assistant responds (Chat: "Explain Go vs Java")
 - [ ] Mobile layout and PWA install metadata work
+
+**Live URL:** https://studysphere-red-psi.vercel.app
 
 ## Project Structure
 

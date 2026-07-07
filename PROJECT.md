@@ -3,7 +3,7 @@
 > **Your Academic Command Center**
 
 Version: 1.0 MVP
-Status: In Development
+Status: Production (MVP shipped)
 Project Owner: Michael Serbeh
 
 ---
