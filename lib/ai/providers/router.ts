@@ -67,6 +67,8 @@ export async function* streamAssistantReply(
   }
 
   let lastError: unknown;
+  const nvidiaOnly =
+    providers.length === 1 && providers[0] === nvidiaDeepSeekProviderId;
 
   for (const provider of providers) {
     try {
@@ -85,6 +87,10 @@ export async function* streamAssistantReply(
       }
     } catch (error) {
       lastError = error;
+
+      if (nvidiaOnly) {
+        throw error;
+      }
     }
   }
 
@@ -104,6 +110,8 @@ export async function generateAssistantReply(
   }
 
   let lastError: unknown;
+  const nvidiaOnly =
+    providers.length === 1 && providers[0] === nvidiaDeepSeekProviderId;
 
   for (const provider of providers) {
     try {
@@ -115,6 +123,10 @@ export async function generateAssistantReply(
       };
     } catch (error) {
       lastError = error;
+
+      if (nvidiaOnly) {
+        throw error;
+      }
     }
   }
 

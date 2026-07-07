@@ -54,10 +54,11 @@ export function resolveProviderOrder(): Array<"openai" | "nvidia-deepseek"> {
   const hasNvidia = Boolean(getNvidiaApiKey());
 
   if (preference === "nvidia") {
-    return [
-      ...(hasNvidia ? (["nvidia-deepseek"] as const) : []),
-      ...(hasOpenAI ? (["openai"] as const) : []),
-    ];
+    if (hasNvidia) {
+      return ["nvidia-deepseek"];
+    }
+
+    return hasOpenAI ? (["openai"] as const) : [];
   }
 
   if (preference === "openai") {
@@ -121,11 +122,15 @@ export function isOpenAIModelUnavailableError(error: unknown): boolean {
 export function getAIErrorMessage(error: unknown): string {
   if (error instanceof OpenAI.APIError) {
     if (error.status === 401) {
-      return "The AI provider rejected the API key. Check your server environment variables.";
+      return "The AI provider rejected the API key. Check NVIDIA_API_KEY or OPENAI_API_KEY in Vercel.";
     }
 
     if (error.status === 429) {
       return "AI rate limit reached. Wait a moment and try again.";
+    }
+
+    if (error.status === 402 || error.message.toLowerCase().includes("quota")) {
+      return "OpenAI quota exceeded. Use AI_PROVIDER=nvidia with NVIDIA_API_KEY, or add billing at platform.openai.com.";
     }
 
     if (error.status === 400) {
