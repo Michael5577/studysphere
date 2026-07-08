@@ -1,11 +1,12 @@
 "use client";
 
 import { AssistantMarkdown } from "@/components/assistant/assistant-markdown";
-import type { AssistantMessage } from "@/lib/ai/types";
+import type { AssistantMessage, AssistantMode } from "@/lib/ai/types";
 import { cn } from "@/lib/utils";
 import { useEffect, useRef } from "react";
 
 interface AssistantMessageListProps {
+  mode: AssistantMode;
   messages: AssistantMessage[];
   isLoading: boolean;
   isStreaming?: boolean;
@@ -13,6 +14,7 @@ interface AssistantMessageListProps {
 }
 
 export function AssistantMessageList({
+  mode,
   messages,
   isLoading,
   isStreaming = false,
@@ -42,7 +44,10 @@ export function AssistantMessageList({
                   "w-fit max-w-[92%] rounded-2xl px-3.5 py-2.5 sm:max-w-[85%] sm:px-4 sm:py-3",
                   isUser
                     ? "rounded-br-md bg-primary text-[15px] leading-[1.5] text-primary-foreground"
-                    : "rounded-bl-md bg-muted-surface text-text",
+                    : cn(
+                        "rounded-bl-md bg-muted-surface text-text",
+                        !isUser && mode === "quiz" && "max-w-full sm:max-w-[95%]",
+                      ),
                   message.error && isUser && "opacity-70",
                 )}
               >
@@ -54,7 +59,11 @@ export function AssistantMessageList({
                 {isUser ? (
                   <p className="whitespace-pre-wrap break-words">{message.content}</p>
                 ) : message.content ? (
-                  <AssistantMarkdown content={message.content} />
+                  <AssistantMarkdown
+                    content={message.content}
+                    mode={mode}
+                    streaming={Boolean(message.streaming)}
+                  />
                 ) : message.streaming ? (
                   <div className="assistant-typing flex items-center gap-1.5 py-1">
                     <span />

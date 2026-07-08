@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { ASSISTANT_MODE_LABELS } from "@/lib/ai/types";
 import { cn } from "@/lib/utils";
 import { lockBodyScroll, unlockBodyScroll } from "@/lib/body-scroll-lock";
-import { RotateCcw, X } from "lucide-react";
+import { RotateCcw, Maximize2, Minimize2, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 const MODE_PLACEHOLDERS = {
@@ -33,6 +33,7 @@ function readOfflineBannerDismissed(): boolean {
 export function AssistantPanel() {
   const {
     open,
+    expanded,
     mode,
     messagesByMode,
     isLoading,
@@ -41,6 +42,7 @@ export function AssistantPanel() {
     isLive,
     setMode,
     closeAssistant,
+    toggleExpanded,
     sendMessage,
     retryLastMessage,
     clearError,
@@ -139,7 +141,9 @@ export function AssistantPanel() {
         className={cn(
           "assistant-panel fixed z-[90] flex flex-col overflow-hidden bg-surface outline-none",
           "inset-0 h-[100dvh] max-h-[100dvh] w-full",
-          "lg:inset-y-0 lg:right-0 lg:left-auto lg:h-auto lg:max-h-[100dvh] lg:w-[var(--assistant-width)] lg:border-l lg:border-border lg:shadow-[var(--shadow-float)]",
+          expanded
+            ? "lg:inset-0 lg:left-[var(--sidebar-width)] lg:w-auto lg:max-w-none lg:border-l lg:border-border"
+            : "lg:inset-y-0 lg:right-0 lg:left-auto lg:h-auto lg:max-h-[100dvh] lg:w-[var(--assistant-width)] lg:border-l lg:border-border lg:shadow-[var(--shadow-float)]",
         )}
       >
         <header className="assistant-header shrink-0 border-b border-border bg-surface/95 px-4 pb-2.5 backdrop-blur-sm pt-[max(0.5rem,env(safe-area-inset-top,0px))] lg:pb-3 lg:pt-[max(0.75rem,env(safe-area-inset-top,0px))]">
@@ -152,16 +156,32 @@ export function AssistantPanel() {
                 {ASSISTANT_MODE_LABELS[mode]}
               </h2>
             </div>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="h-9 w-9 shrink-0 p-0"
-              onClick={closeAssistant}
-              aria-label="Close assistant"
-            >
-              <X className="h-4 w-4" />
-            </Button>
+            <div className="flex shrink-0 items-center gap-1">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="hidden h-9 w-9 p-0 lg:inline-flex"
+                onClick={toggleExpanded}
+                aria-label={expanded ? "Exit full screen" : "Open full screen"}
+              >
+                {expanded ? (
+                  <Minimize2 className="h-4 w-4" />
+                ) : (
+                  <Maximize2 className="h-4 w-4" />
+                )}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-9 w-9 shrink-0 p-0"
+                onClick={closeAssistant}
+                aria-label="Close assistant"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
 
           <AssistantModeTabs mode={mode} onChange={setMode} className="mt-2" />
@@ -210,6 +230,7 @@ export function AssistantPanel() {
             />
           ) : (
             <AssistantMessageList
+              mode={mode}
               messages={messages}
               isLoading={isLoading}
               isStreaming={isStreaming}

@@ -626,6 +626,20 @@ html:has(.landing-section) {
   -webkit-overflow-scrolling: touch;
 }
 
+.assistant-diagram svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.assistant-diagram text {
+  fill: var(--foreground);
+}
+
+.assistant-markdown .assistant-diagram-fallback {
+  white-space: pre-wrap;
+}
+
 @media (max-width: 1023px) {
   .assistant-panel {
     --assistant-browser-toolbar: 3.25rem;

@@ -13,12 +13,21 @@ const BASE_INSTRUCTIONS = [
   "For homework help: explain concepts and guide step-by-step reasoning without doing unethical work for them.",
 ].join(" ");
 
+const VISUAL_INSTRUCTIONS = [
+  "When a visual explanation helps (processes, cycles, comparisons, system flows, labeled sketches), include a diagram.",
+  "Prefer a ```mermaid code block for flowcharts, graphs, timelines, and process diagrams.",
+  "For simple labeled sketches (e.g., a leaf cross-section, cell diagram), use a ```svg code block with clean inline SVG: lines, arrows, rectangles, circles, and text labels.",
+  "Do NOT say you cannot draw — render diagrams as mermaid or SVG code blocks instead.",
+  "Keep diagrams readable: short labels, clear arrows, and only the parts needed to understand the concept.",
+].join(" ");
+
 const MODE_INSTRUCTIONS: Record<AssistantMode, string> = {
   chat: [
     BASE_INSTRUCTIONS,
+    VISUAL_INSTRUCTIONS,
     "Mode: Chat — answer academic questions and help with studying.",
     "You can explain concepts, answer questions, help plan study sessions, and guide homework understanding.",
-    "For concept explanations: define simply, explain why it matters, give an example, note a common mistake, end with one check-for-understanding question.",
+    "For concept explanations: define simply, explain why it matters, give an example, include a diagram when useful, note a common mistake, end with one check-for-understanding question.",
     "For study planning: prioritize by deadlines and difficulty, suggest realistic time blocks.",
   ].join(" "),
   summarize: [
@@ -36,9 +45,12 @@ const MODE_INSTRUCTIONS: Record<AssistantMode, string> = {
   ].join(" "),
   quiz: [
     BASE_INSTRUCTIONS,
-    "Mode: Quiz — generate a short practice quiz on the student's topic.",
-    "Return 3–5 multiple-choice or short-answer questions with an ## Answer key at the end.",
-    "Match difficulty to what the student described. If the topic is unclear, ask one clarifying question.",
+    "Mode: Quiz — generate an interactive multiple-choice practice quiz.",
+    "Return ONLY a single fenced ```json code block with this exact shape and no other text:",
+    '{"questions":[{"id":"q1","prompt":"Question text?","options":["Option A","Option B","Option C","Option D"],"correctIndex":0,"explanation":"Why the correct answer is right."}]}',
+    "Generate 5–8 questions. Each question must have 4 options unless the topic clearly needs fewer.",
+    "Do NOT include a separate answer key section — put the explanation inside each question object.",
+    "Match difficulty to what the student described. If the topic is unclear, ask one clarifying question in plain text instead of JSON.",
   ].join(" "),
 };
 

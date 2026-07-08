@@ -30,6 +30,7 @@ interface RetryPayload {
 
 interface AssistantContextValue {
   open: boolean;
+  expanded: boolean;
   mode: AssistantMode;
   messagesByMode: Record<AssistantMode, AssistantMessage[]>;
   isLoading: boolean;
@@ -40,6 +41,7 @@ interface AssistantContextValue {
   openAssistant: () => void;
   closeAssistant: () => void;
   toggleAssistant: () => void;
+  toggleExpanded: () => void;
   sendMessage: (content: string) => Promise<void>;
   retryLastMessage: () => Promise<void>;
   clearError: () => void;
@@ -73,6 +75,7 @@ interface AssistantProviderProps {
 
 export function AssistantProvider({ children }: AssistantProviderProps) {
   const [open, setOpen] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   const [mode, setMode] = useState<AssistantMode>("chat");
   const [messagesByMode, setMessagesByMode] =
     useState<Record<AssistantMode, AssistantMessage[]>>(emptyMessages);
@@ -102,6 +105,7 @@ export function AssistantProvider({ children }: AssistantProviderProps) {
   const openAssistant = useCallback(() => setOpen(true), []);
   const closeAssistant = useCallback(() => setOpen(false), []);
   const toggleAssistant = useCallback(() => setOpen((current) => !current), []);
+  const toggleExpanded = useCallback(() => setExpanded((current) => !current), []);
   const clearError = useCallback(() => setError(null), []);
 
   useEffect(() => {
@@ -337,6 +341,7 @@ export function AssistantProvider({ children }: AssistantProviderProps) {
   const value = useMemo(
     () => ({
       open,
+      expanded,
       mode,
       messagesByMode,
       isLoading,
@@ -347,12 +352,14 @@ export function AssistantProvider({ children }: AssistantProviderProps) {
       openAssistant,
       closeAssistant,
       toggleAssistant,
+      toggleExpanded,
       sendMessage,
       retryLastMessage,
       clearError,
     }),
     [
       open,
+      expanded,
       mode,
       messagesByMode,
       isLoading,
@@ -362,6 +369,7 @@ export function AssistantProvider({ children }: AssistantProviderProps) {
       openAssistant,
       closeAssistant,
       toggleAssistant,
+      toggleExpanded,
       sendMessage,
       retryLastMessage,
       clearError,
