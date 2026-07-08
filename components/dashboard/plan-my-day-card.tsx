@@ -8,7 +8,9 @@ import { useState } from "react";
 
 export function PlanMyDayCard() {
   const [plan, setPlan] = useState<string | null>(null);
-  const [source, setSource] = useState<"openai" | "nvidia-deepseek" | "fallback" | null>(null);
+  const [source, setSource] = useState<
+    "openai" | "nvidia-deepseek" | "openrouter" | "fallback" | null
+  >(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

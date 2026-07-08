@@ -1,6 +1,6 @@
 import type { AssistantMode } from "@/lib/ai/types";
 
-export type AssistantProviderId = "openai" | "nvidia-deepseek";
+export type AssistantProviderId = "openai" | "nvidia-deepseek" | "openrouter";
 
 export type AssistantSource = AssistantProviderId | "unconfigured";
 

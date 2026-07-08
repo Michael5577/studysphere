@@ -7,7 +7,7 @@ import type { ActionResult } from "@/types/actions";
 
 export interface PlanMyDayResult {
   plan: string;
-  source: "openai" | "nvidia-deepseek" | "fallback";
+  source: "openai" | "nvidia-deepseek" | "openrouter" | "fallback";
 }
 
 export async function generatePlanMyDayAction(): Promise<

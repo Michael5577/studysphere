@@ -22,6 +22,8 @@ export function AssistantOfflineBanner({
     >
       <p className="min-w-0 flex-1 text-[11px] leading-snug text-muted">
         Offline AI — add{" "}
+        <span className="font-mono text-[10px] text-text">OPENROUTER_API_KEY</span>
+        ,{" "}
         <span className="font-mono text-[10px] text-text">NVIDIA_API_KEY</span>{" "}
         or{" "}
         <span className="font-mono text-[10px] text-text">OPENAI_API_KEY</span>{" "}

@@ -1,6 +1,4 @@
-import {
-  resolveProviderOrder,
-} from "@/lib/ai/assistant-config";
+import { resolveProviderOrder } from "@/lib/ai/assistant-config";
 import { getAssistantUnavailableReply } from "@/lib/ai/unavailable";
 import {
   completeOpenAIProvider,
@@ -13,6 +11,12 @@ import {
   nvidiaDeepSeekProviderId,
   streamNvidiaDeepSeekProvider,
 } from "@/lib/ai/providers/nvidia-deepseek-provider";
+import {
+  completeOpenRouterProvider,
+  completeOpenRouterText,
+  openRouterProviderId,
+  streamOpenRouterProvider,
+} from "@/lib/ai/providers/openrouter-provider";
 import type {
   AssistantCompletionInput,
   AssistantProviderId,
@@ -25,6 +29,11 @@ async function* streamWithProvider(
   provider: AssistantProviderId,
   input: AssistantCompletionInput,
 ): AsyncGenerator<string, void, undefined> {
+  if (provider === openRouterProviderId) {
+    yield* streamOpenRouterProvider(input);
+    return;
+  }
+
   if (provider === nvidiaDeepSeekProviderId) {
     yield* streamNvidiaDeepSeekProvider(input);
     return;
@@ -37,6 +46,10 @@ async function completeWithProvider(
   provider: AssistantProviderId,
   input: AssistantCompletionInput,
 ): Promise<string> {
+  if (provider === openRouterProviderId) {
+    return completeOpenRouterProvider(input);
+  }
+
   if (provider === nvidiaDeepSeekProviderId) {
     return completeNvidiaDeepSeekProvider(input);
   }
@@ -48,11 +61,22 @@ async function completeTextWithProvider(
   provider: AssistantProviderId,
   input: AssistantTextInput,
 ): Promise<string> {
+  if (provider === openRouterProviderId) {
+    return completeOpenRouterText(input);
+  }
+
   if (provider === nvidiaDeepSeekProviderId) {
     return completeNvidiaDeepSeekText(input);
   }
 
   return completeOpenAIText(input);
+}
+
+function shouldRethrowProviderError(
+  providers: AssistantProviderId[],
+  provider: AssistantProviderId,
+): boolean {
+  return providers.length === 1 && providers[0] === provider;
 }
 
 export async function* streamAssistantReply(
@@ -67,8 +91,6 @@ export async function* streamAssistantReply(
   }
 
   let lastError: unknown;
-  const nvidiaOnly =
-    providers.length === 1 && providers[0] === nvidiaDeepSeekProviderId;
 
   for (const provider of providers) {
     try {
@@ -88,7 +110,7 @@ export async function* streamAssistantReply(
     } catch (error) {
       lastError = error;
 
-      if (nvidiaOnly) {
+      if (shouldRethrowProviderError(providers, provider)) {
         throw error;
       }
     }
@@ -110,8 +132,6 @@ export async function generateAssistantReply(
   }
 
   let lastError: unknown;
-  const nvidiaOnly =
-    providers.length === 1 && providers[0] === nvidiaDeepSeekProviderId;
 
   for (const provider of providers) {
     try {
@@ -124,7 +144,7 @@ export async function generateAssistantReply(
     } catch (error) {
       lastError = error;
 
-      if (nvidiaOnly) {
+      if (shouldRethrowProviderError(providers, provider)) {
         throw error;
       }
     }

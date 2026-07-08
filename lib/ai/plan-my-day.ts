@@ -4,7 +4,7 @@ import { generateAssistantText } from "@/lib/ai/providers/router";
 
 export interface PlanMyDayResult {
   plan: string;
-  source: "openai" | "nvidia-deepseek" | "fallback";
+  source: "openai" | "nvidia-deepseek" | "openrouter" | "fallback";
 }
 
 const PLAN_INSTRUCTIONS = [

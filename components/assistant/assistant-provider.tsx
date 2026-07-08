@@ -1,6 +1,7 @@
 "use client";
 
 import type { AssistantMessage, AssistantMode } from "@/lib/ai/types";
+import type { AssistantSource } from "@/lib/ai/providers/types";
 import {
   createContext,
   useCallback,
@@ -186,7 +187,7 @@ export function AssistantProvider({ children }: AssistantProviderProps) {
         const decoder = new TextDecoder();
         let buffer = "";
         let fullReply = "";
-        let source: "openai" | "nvidia-deepseek" | "unconfigured" = "openai";
+        let source: AssistantSource = "openai";
 
         while (true) {
           const { done, value } = await reader.read();
@@ -208,7 +209,7 @@ export function AssistantProvider({ children }: AssistantProviderProps) {
               delta?: string;
               error?: string;
               done?: boolean;
-              source?: "openai" | "nvidia-deepseek" | "unconfigured";
+              source?: AssistantSource;
             };
 
             if (payload.source === "unconfigured") {
@@ -216,7 +217,8 @@ export function AssistantProvider({ children }: AssistantProviderProps) {
               setIsLive(false);
             } else if (
               payload.source === "openai" ||
-              payload.source === "nvidia-deepseek"
+              payload.source === "nvidia-deepseek" ||
+              payload.source === "openrouter"
             ) {
               source = payload.source;
               setIsLive(true);
@@ -256,7 +258,11 @@ export function AssistantProvider({ children }: AssistantProviderProps) {
           throw new Error("No response received. Please try again.");
         }
 
-        if (source === "openai" || source === "nvidia-deepseek") {
+        if (
+          source === "openai" ||
+          source === "nvidia-deepseek" ||
+          source === "openrouter"
+        ) {
           setIsLive(true);
           retryPayloadRef.current = null;
         }

@@ -6,7 +6,12 @@ export const OPENAI_PREFERRED_MODEL = "gpt-5.5";
 export const NVIDIA_API_BASE_URL = "https://integrate.api.nvidia.com/v1";
 export const NVIDIA_DEEPSEEK_MODEL = "deepseek-ai/deepseek-v4-flash";
 
-export type AIProviderPreference = "auto" | "openai" | "nvidia";
+export const OPENROUTER_API_BASE_URL = "https://openrouter.ai/api/v1";
+export const OPENROUTER_DEFAULT_MODEL = "deepseek/deepseek-chat";
+export const OPENROUTER_DEFAULT_SITE_URL =
+  "https://studysphere-red-psi.vercel.app";
+
+export type AIProviderPreference = "auto" | "openai" | "nvidia" | "openrouter";
 
 export function getOpenAIApiKey(): string | undefined {
   return process.env.OPENAI_API_KEY?.trim() || undefined;
@@ -14,6 +19,10 @@ export function getOpenAIApiKey(): string | undefined {
 
 export function getNvidiaApiKey(): string | undefined {
   return process.env.NVIDIA_API_KEY?.trim() || undefined;
+}
+
+export function getOpenRouterApiKey(): string | undefined {
+  return process.env.OPENROUTER_API_KEY?.trim() || undefined;
 }
 
 export function getOpenAIModelPreference(): string {
@@ -24,10 +33,27 @@ export function getNvidiaModelPreference(): string {
   return process.env.NVIDIA_MODEL?.trim() || NVIDIA_DEEPSEEK_MODEL;
 }
 
+export function getOpenRouterModelPreference(): string {
+  return process.env.OPENROUTER_MODEL?.trim() || OPENROUTER_DEFAULT_MODEL;
+}
+
+export function getOpenRouterSiteUrl(): string {
+  const raw =
+    process.env.OPENROUTER_SITE_URL?.trim() ||
+    process.env.NEXT_PUBLIC_APP_URL?.trim() ||
+    OPENROUTER_DEFAULT_SITE_URL;
+
+  return raw.startsWith("http") ? raw : `https://${raw}`;
+}
+
 export function getAIProviderPreference(): AIProviderPreference {
   const value = process.env.AI_PROVIDER?.trim().toLowerCase();
 
-  if (value === "openai" || value === "nvidia") {
+  if (
+    value === "openai" ||
+    value === "nvidia" ||
+    value === "openrouter"
+  ) {
     return value;
   }
 
@@ -35,7 +61,9 @@ export function getAIProviderPreference(): AIProviderPreference {
 }
 
 export function isAssistantLive(): boolean {
-  return Boolean(getOpenAIApiKey() || getNvidiaApiKey());
+  return Boolean(
+    getOpenRouterApiKey() || getOpenAIApiKey() || getNvidiaApiKey(),
+  );
 }
 
 export function getPrimaryProviderLabel(): string | null {
@@ -48,14 +76,36 @@ export function getPrimaryProviderLabel(): string | null {
   return order[0];
 }
 
-export function resolveProviderOrder(): Array<"openai" | "nvidia-deepseek"> {
+export type ConfiguredAssistantProvider =
+  | "openai"
+  | "nvidia-deepseek"
+  | "openrouter";
+
+export function resolveProviderOrder(): ConfiguredAssistantProvider[] {
   const preference = getAIProviderPreference();
   const hasOpenAI = Boolean(getOpenAIApiKey());
   const hasNvidia = Boolean(getNvidiaApiKey());
+  const hasOpenRouter = Boolean(getOpenRouterApiKey());
+
+  if (preference === "openrouter") {
+    if (hasOpenRouter) {
+      return ["openrouter"];
+    }
+
+    if (hasNvidia) {
+      return ["nvidia-deepseek"];
+    }
+
+    return hasOpenAI ? (["openai"] as const) : [];
+  }
 
   if (preference === "nvidia") {
     if (hasNvidia) {
       return ["nvidia-deepseek"];
+    }
+
+    if (hasOpenRouter) {
+      return ["openrouter"];
     }
 
     return hasOpenAI ? (["openai"] as const) : [];
@@ -64,11 +114,13 @@ export function resolveProviderOrder(): Array<"openai" | "nvidia-deepseek"> {
   if (preference === "openai") {
     return [
       ...(hasOpenAI ? (["openai"] as const) : []),
+      ...(hasOpenRouter ? (["openrouter"] as const) : []),
       ...(hasNvidia ? (["nvidia-deepseek"] as const) : []),
     ];
   }
 
   return [
+    ...(hasOpenRouter ? (["openrouter"] as const) : []),
     ...(hasNvidia ? (["nvidia-deepseek"] as const) : []),
     ...(hasOpenAI ? (["openai"] as const) : []),
   ];
@@ -122,7 +174,7 @@ export function isOpenAIModelUnavailableError(error: unknown): boolean {
 export function getAIErrorMessage(error: unknown): string {
   if (error instanceof OpenAI.APIError) {
     if (error.status === 401) {
-      return "The AI provider rejected the API key. Check NVIDIA_API_KEY or OPENAI_API_KEY in Vercel.";
+      return "The AI provider rejected the API key. Check your API keys in Vercel or .env.local.";
     }
 
     if (error.status === 429) {
@@ -130,7 +182,7 @@ export function getAIErrorMessage(error: unknown): string {
     }
 
     if (error.status === 402 || error.message.toLowerCase().includes("quota")) {
-      return "OpenAI quota exceeded. Use AI_PROVIDER=nvidia with NVIDIA_API_KEY, or add billing at platform.openai.com.";
+      return "OpenAI quota exceeded. Switch to OPENROUTER_API_KEY or NVIDIA_API_KEY.";
     }
 
     return `AI provider error (${error.status}): ${error.message}`;
@@ -145,7 +197,7 @@ export function getAIErrorMessage(error: unknown): string {
     const message = error.message.trim();
 
     if (error.status === 401) {
-      return "NVIDIA rejected the API key. Verify NVIDIA_API_KEY in Vercel Production settings.";
+      return "NVIDIA rejected the API key. Verify NVIDIA_API_KEY in your environment.";
     }
 
     if (error.status === 429) {
@@ -155,6 +207,27 @@ export function getAIErrorMessage(error: unknown): string {
     return message
       ? `NVIDIA error (${error.status}): ${message}`
       : `NVIDIA error (${error.status}).`;
+  }
+
+  if (
+    error instanceof Error &&
+    error.name === "OpenRouterApiError" &&
+    "status" in error &&
+    typeof error.status === "number"
+  ) {
+    const message = error.message.trim();
+
+    if (error.status === 401) {
+      return "OpenRouter rejected the API key. Verify OPENROUTER_API_KEY in your environment.";
+    }
+
+    if (error.status === 429) {
+      return "OpenRouter rate limit reached. Wait a moment and try again.";
+    }
+
+    return message
+      ? `OpenRouter error (${error.status}): ${message}`
+      : `OpenRouter error (${error.status}).`;
   }
 
   if (error instanceof Error) {

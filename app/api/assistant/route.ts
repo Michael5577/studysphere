@@ -7,6 +7,7 @@ import {
   getAIErrorMessage,
   getAIProviderPreference,
   getNvidiaApiKey,
+  getOpenRouterApiKey,
   getOpenAIApiKey,
   getPrimaryProviderLabel,
   isAssistantLive,
@@ -55,6 +56,7 @@ export async function GET() {
       provider: getPrimaryProviderLabel(),
       preference: getAIProviderPreference(),
       nvidiaConfigured: Boolean(getNvidiaApiKey()),
+      openrouterConfigured: Boolean(getOpenRouterApiKey()),
       openaiConfigured: Boolean(getOpenAIApiKey()),
     });
   } catch (error) {

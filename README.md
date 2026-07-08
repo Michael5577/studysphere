@@ -103,10 +103,10 @@ Create a test user via the signup page, or add one in **Supabase → Authenticat
    |----------|---------|
    | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
    | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Legacy anon key (`eyJ...`) from Supabase → API Keys |
-   | `NVIDIA_API_KEY` | NVIDIA Build API key (`nvapi-...`) — powers the AI assistant |
-   | `AI_PROVIDER` | Set to `nvidia` (recommended) |
+   | `OPENROUTER_API_KEY` | OpenRouter API key (`sk-or-v1-...`) — recommended for AI |
+   | `AI_PROVIDER` | Set to `openrouter` (recommended) |
 
-   Optional fallback: `OPENAI_API_KEY` + `AI_PROVIDER=auto`
+   Optional alternatives: `NVIDIA_API_KEY`, `OPENAI_API_KEY`, or `AI_PROVIDER=auto`
 
 4. Deploy from branch `main`
 
@@ -114,11 +114,13 @@ Ensure the Supabase schema is applied to your production project before testing.
 
 **After changing any env var**, redeploy the latest Production deployment so the new values take effect.
 
-### AI assistant (NVIDIA DeepSeek V4 Flash)
+### AI assistant (OpenRouter — recommended)
 
 - Server route: `/api/assistant` (never expose API keys to the client)
-- Model: `deepseek-ai/deepseek-v4-flash` via `integrate.api.nvidia.com`
-- Get a free key at [build.nvidia.com](https://build.nvidia.com) → DeepSeek V4 Flash → Get API Key
+- Default model: `deepseek/deepseek-chat` via [openrouter.ai](https://openrouter.ai)
+- Set `OPENROUTER_MODEL` to any supported model slug (e.g. `meta-llama/llama-3.3-70b-instruct:free`)
+
+Alternatives: NVIDIA DeepSeek (`NVIDIA_API_KEY`) or OpenAI (`OPENAI_API_KEY`)
 
 ### Post-deploy checklist
 
