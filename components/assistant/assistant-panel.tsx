@@ -2,15 +2,17 @@
 
 import { AssistantComposer } from "@/components/assistant/assistant-composer";
 import { AssistantEmptyState } from "@/components/assistant/assistant-empty-state";
+import { AssistantHistoryPanel } from "@/components/assistant/assistant-history";
 import { AssistantMessageList } from "@/components/assistant/assistant-message-list";
 import { AssistantOfflineBanner } from "@/components/assistant/assistant-offline-banner";
+import { AssistantQuizSetup } from "@/components/assistant/assistant-quiz-setup";
 import { useAssistant } from "@/components/assistant/assistant-provider";
 import { AssistantModeTabs } from "@/components/assistant/assistant-trigger";
 import { Button } from "@/components/ui/button";
 import { ASSISTANT_MODE_LABELS } from "@/lib/ai/types";
 import { cn } from "@/lib/utils";
 import { lockBodyScroll, unlockBodyScroll } from "@/lib/body-scroll-lock";
-import { RotateCcw, Maximize2, Minimize2, X } from "lucide-react";
+import { History, RotateCcw, Maximize2, Minimize2, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 const MODE_PLACEHOLDERS = {
@@ -40,9 +42,17 @@ export function AssistantPanel() {
     isStreaming,
     error,
     isLive,
+    quizSettings,
+    historyEntries,
+    historyOpen,
     setMode,
+    setQuizSettings,
     closeAssistant,
     toggleExpanded,
+    toggleHistory,
+    restoreHistoryEntry,
+    removeHistoryEntry,
+    clearHistory,
     sendMessage,
     retryLastMessage,
     clearError,
@@ -161,6 +171,19 @@ export function AssistantPanel() {
                 type="button"
                 variant="ghost"
                 size="sm"
+                className={cn(
+                  "h-9 w-9 p-0",
+                  historyOpen && "bg-primary-muted text-primary",
+                )}
+                onClick={toggleHistory}
+                aria-label="Study history"
+              >
+                <History className="h-4 w-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
                 className="hidden h-9 w-9 p-0 lg:inline-flex"
                 onClick={toggleExpanded}
                 aria-label={expanded ? "Exit full screen" : "Open full screen"}
@@ -194,7 +217,23 @@ export function AssistantPanel() {
           )}
         </header>
 
+        {historyOpen ? (
+          <AssistantHistoryPanel
+            entries={historyEntries}
+            onRestore={restoreHistoryEntry}
+            onDelete={removeHistoryEntry}
+            onClearAll={clearHistory}
+            onClose={toggleHistory}
+          />
+        ) : (
         <div className="assistant-body flex min-h-0 flex-1 flex-col overflow-hidden">
+          {mode === "quiz" && (
+            <AssistantQuizSetup
+              settings={quizSettings}
+              onChange={setQuizSettings}
+              disabled={isLoading}
+            />
+          )}
           {error && (
             <div
               role="alert"
@@ -238,12 +277,15 @@ export function AssistantPanel() {
             />
           )}
         </div>
+        )}
 
-        <AssistantComposer
-          onSend={sendMessage}
-          isLoading={isLoading}
-          placeholder={MODE_PLACEHOLDERS[mode]}
-        />
+        {!historyOpen && (
+          <AssistantComposer
+            onSend={sendMessage}
+            isLoading={isLoading}
+            placeholder={MODE_PLACEHOLDERS[mode]}
+          />
+        )}
       </aside>
     </>
   );

@@ -1,9 +1,31 @@
 "use client";
 
 import { AssistantMarkdown } from "@/components/assistant/assistant-markdown";
+import { useAssistant } from "@/components/assistant/assistant-provider";
 import type { AssistantMessage, AssistantMode } from "@/lib/ai/types";
 import { cn } from "@/lib/utils";
+import { Loader2 } from "lucide-react";
 import { useEffect, useRef } from "react";
+
+const QUIZ_BUILDING_STEPS = [
+  "Building your quiz…",
+  "Creating questions…",
+  "Mixing answer choices…",
+];
+
+function QuizBuildingIndicator({ contentLength }: { contentLength: number }) {
+  const step = Math.min(
+    QUIZ_BUILDING_STEPS.length - 1,
+    Math.floor(contentLength / 400),
+  );
+
+  return (
+    <div className="flex items-center gap-2 py-1" aria-live="polite" aria-busy="true">
+      <Loader2 className="h-4 w-4 animate-spin text-primary" />
+      <p className="text-sm font-medium text-text">{QUIZ_BUILDING_STEPS[step]}</p>
+    </div>
+  );
+}
 
 interface AssistantMessageListProps {
   mode: AssistantMode;
@@ -21,6 +43,7 @@ export function AssistantMessageList({
   isOffline = false,
 }: AssistantMessageListProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
+  const { quizSettings } = useAssistant();
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -59,11 +82,16 @@ export function AssistantMessageList({
                 {isUser ? (
                   <p className="whitespace-pre-wrap break-words">{message.content}</p>
                 ) : message.content ? (
-                  <AssistantMarkdown
-                    content={message.content}
-                    mode={mode}
-                    streaming={Boolean(message.streaming)}
-                  />
+                  mode === "quiz" && message.streaming ? (
+                    <QuizBuildingIndicator contentLength={message.content.length} />
+                  ) : (
+                    <AssistantMarkdown
+                      content={message.content}
+                      mode={mode}
+                      streaming={Boolean(message.streaming)}
+                      quizPlayMode={quizSettings.playMode}
+                    />
+                  )
                 ) : message.streaming ? (
                   <div className="assistant-typing flex items-center gap-1.5 py-1">
                     <span />

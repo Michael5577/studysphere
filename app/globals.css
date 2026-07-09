@@ -292,6 +292,41 @@ html[data-bg="vivid"] body::after {
     );
 }
 
+/* Distinct palettes per background style so switching is clearly visible */
+html[data-bg="vivid"] {
+  --bg-wash-1: rgb(93 112 82 / 0.3);
+  --bg-wash-2: rgb(193 140 93 / 0.28);
+  --bg-wash-3: rgb(230 220 205 / 0.85);
+}
+
+[data-theme="dark"][data-bg="vivid"] {
+  --bg-wash-1: rgb(143 170 130 / 0.22);
+  --bg-wash-2: rgb(212 165 116 / 0.18);
+  --bg-wash-3: rgb(48 58 42 / 0.85);
+}
+
+html[data-bg="aurora"] {
+  --bg-wash-1: rgb(96 140 200 / 0.22);
+  --bg-wash-2: rgb(150 110 200 / 0.18);
+  --bg-wash-3: rgb(90 175 145 / 0.22);
+}
+
+[data-theme="dark"][data-bg="aurora"] {
+  --bg-wash-1: rgb(96 140 200 / 0.2);
+  --bg-wash-2: rgb(150 110 200 / 0.16);
+  --bg-wash-3: rgb(70 140 115 / 0.28);
+}
+
+html[data-bg="organic"] {
+  --bg-wash-1: rgb(120 108 76 / 0.22);
+  --bg-wash-2: rgb(93 112 82 / 0.18);
+}
+
+[data-theme="dark"][data-bg="organic"] {
+  --bg-wash-1: rgb(150 138 100 / 0.14);
+  --bg-wash-2: rgb(143 170 130 / 0.12);
+}
+
 /* Keep page content above ambient layers */
 body > * {
   position: relative;
@@ -638,6 +673,26 @@ html:has(.landing-section) {
 
 .assistant-markdown .assistant-diagram-fallback {
   white-space: pre-wrap;
+}
+
+@keyframes quiz-celebrate-pop {
+  0% {
+    transform: scale(0.97);
+    opacity: 0.6;
+  }
+  60% {
+    transform: scale(1.01);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .quiz-celebrate {
+    animation: quiz-celebrate-pop 0.35s var(--ease);
+  }
 }
 
 @media (max-width: 1023px) {

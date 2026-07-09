@@ -31,7 +31,7 @@ export function AssistantEmptyState({
         </h3>
         <p className="mt-1.5 max-w-sm text-sm leading-relaxed text-muted">
           {isOffline
-            ? "Add NVIDIA_API_KEY or OPENAI_API_KEY to enable live AI tutoring."
+            ? "Add OPENROUTER_API_KEY (or NVIDIA/OpenAI keys) to enable live AI tutoring."
             : "Explain concepts, summarize notes, build flashcards, or take a practice quiz."}
         </p>
 

@@ -3,6 +3,13 @@
 import type { AssistantMessage, AssistantMode } from "@/lib/ai/types";
 import type { AssistantSource } from "@/lib/ai/providers/types";
 import {
+  deleteAssistantHistoryEntry,
+  clearAssistantHistory,
+  readAssistantHistory,
+  upsertAssistantHistoryEntry,
+  type AssistantHistoryEntry,
+} from "@/lib/ai/history";
+import {
   createContext,
   useCallback,
   useContext,
@@ -28,6 +35,18 @@ interface RetryPayload {
   history: AssistantHistoryItem[];
 }
 
+export interface QuizSettings {
+  questionCount: 5 | 10 | 20;
+  difficulty: "easy" | "medium" | "hard" | "mixed";
+  playMode: "practice" | "exam";
+}
+
+const DEFAULT_QUIZ_SETTINGS: QuizSettings = {
+  questionCount: 5,
+  difficulty: "mixed",
+  playMode: "practice",
+};
+
 interface AssistantContextValue {
   open: boolean;
   expanded: boolean;
@@ -37,11 +56,20 @@ interface AssistantContextValue {
   isStreaming: boolean;
   error: string | null;
   isLive: boolean;
+  quizSettings: QuizSettings;
+  historyEntries: AssistantHistoryEntry[];
+  historyOpen: boolean;
   setMode: (mode: AssistantMode) => void;
+  setQuizSettings: (settings: QuizSettings) => void;
   openAssistant: () => void;
   closeAssistant: () => void;
   toggleAssistant: () => void;
   toggleExpanded: () => void;
+  collapseExpanded: () => void;
+  toggleHistory: () => void;
+  restoreHistoryEntry: (id: string) => void;
+  removeHistoryEntry: (id: string) => void;
+  clearHistory: () => void;
   sendMessage: (content: string) => Promise<void>;
   retryLastMessage: () => Promise<void>;
   clearError: () => void;
@@ -69,6 +97,11 @@ const emptyMessages = (): Record<AssistantMode, AssistantMessage[]> => ({
   quiz: [],
 });
 
+function historyTitle(message: string): string {
+  const clean = message.replace(/\s+/g, " ").trim();
+  return clean.length > 60 ? `${clean.slice(0, 57)}…` : clean;
+}
+
 interface AssistantProviderProps {
   children: ReactNode;
 }
@@ -76,6 +109,7 @@ interface AssistantProviderProps {
 export function AssistantProvider({ children }: AssistantProviderProps) {
   const [open, setOpen] = useState(false);
   const [expanded, setExpanded] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const [mode, setMode] = useState<AssistantMode>("chat");
   const [messagesByMode, setMessagesByMode] =
     useState<Record<AssistantMode, AssistantMessage[]>>(emptyMessages);
@@ -83,8 +117,13 @@ export function AssistantProvider({ children }: AssistantProviderProps) {
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLive, setIsLive] = useState(false);
+  const [quizSettings, setQuizSettings] = useState<QuizSettings>(
+    DEFAULT_QUIZ_SETTINGS,
+  );
+  const [historyEntries, setHistoryEntries] = useState<AssistantHistoryEntry[]>([]);
   const retryPayloadRef = useRef<RetryPayload | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const sessionIdsRef = useRef<Partial<Record<AssistantMode, string>>>({});
 
   useEffect(() => {
     void fetch("/api/assistant")
@@ -103,9 +142,22 @@ export function AssistantProvider({ children }: AssistantProviderProps) {
   }, []);
 
   const openAssistant = useCallback(() => setOpen(true), []);
-  const closeAssistant = useCallback(() => setOpen(false), []);
+  const closeAssistant = useCallback(() => {
+    setOpen(false);
+    setHistoryOpen(false);
+  }, []);
   const toggleAssistant = useCallback(() => setOpen((current) => !current), []);
   const toggleExpanded = useCallback(() => setExpanded((current) => !current), []);
+  const collapseExpanded = useCallback(() => setExpanded(false), []);
+  const toggleHistory = useCallback(() => {
+    setHistoryOpen((current) => {
+      if (!current) {
+        setHistoryEntries(readAssistantHistory());
+      }
+
+      return !current;
+    });
+  }, []);
   const clearError = useCallback(() => setError(null), []);
 
   useEffect(() => {
@@ -126,9 +178,27 @@ export function AssistantProvider({ children }: AssistantProviderProps) {
     }
 
     function handleEscape(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        setOpen(false);
+      if (event.key !== "Escape") {
+        return;
       }
+
+      // Esc steps back: history → fullscreen → close.
+      setHistoryOpen((historyWasOpen) => {
+        if (historyWasOpen) {
+          return false;
+        }
+
+        setExpanded((wasExpanded) => {
+          if (wasExpanded) {
+            return false;
+          }
+
+          setOpen(false);
+          return false;
+        });
+
+        return false;
+      });
     }
 
     document.addEventListener("keydown", handleEscape);
@@ -139,6 +209,66 @@ export function AssistantProvider({ children }: AssistantProviderProps) {
     return () => {
       abortRef.current?.abort();
     };
+  }, []);
+
+  const persistSession = useCallback(
+    (activeMode: AssistantMode, messages: AssistantMessage[]) => {
+      const clean = messages.filter((item) => !item.error && item.content.trim());
+
+      if (clean.length === 0) {
+        return;
+      }
+
+      const firstUser = clean.find((item) => item.role === "user");
+
+      const sessionId =
+        sessionIdsRef.current[activeMode] ??
+        `${activeMode}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      sessionIdsRef.current[activeMode] = sessionId;
+
+      const entry: AssistantHistoryEntry = {
+        id: sessionId,
+        mode: activeMode,
+        title: historyTitle(firstUser?.content ?? "Study session"),
+        updatedAt: Date.now(),
+        messages: clean.map((item) => ({
+          role: item.role,
+          content: item.content,
+        })),
+      };
+
+      upsertAssistantHistoryEntry(entry);
+      setHistoryEntries(readAssistantHistory());
+    },
+    [],
+  );
+
+  const restoreHistoryEntry = useCallback((id: string) => {
+    const entry = readAssistantHistory().find((item) => item.id === id);
+
+    if (!entry) {
+      return;
+    }
+
+    sessionIdsRef.current[entry.mode] = entry.id;
+    setMode(entry.mode);
+    setMessagesByMode((current) => ({
+      ...current,
+      [entry.mode]: entry.messages.map((item) =>
+        createMessage(item.role, item.content),
+      ),
+    }));
+    setHistoryOpen(false);
+  }, []);
+
+  const removeHistoryEntry = useCallback((id: string) => {
+    deleteAssistantHistoryEntry(id);
+    setHistoryEntries(readAssistantHistory());
+  }, []);
+
+  const clearHistory = useCallback(() => {
+    clearAssistantHistory();
+    setHistoryEntries([]);
   }, []);
 
   const dispatchMessage = useCallback(
@@ -270,6 +400,11 @@ export function AssistantProvider({ children }: AssistantProviderProps) {
           setIsLive(true);
           retryPayloadRef.current = null;
         }
+
+        setMessagesByMode((current) => {
+          persistSession(activeMode, current[activeMode]);
+          return current;
+        });
       } catch (cause) {
         if (cause instanceof DOMException && cause.name === "AbortError") {
           return;
@@ -295,7 +430,7 @@ export function AssistantProvider({ children }: AssistantProviderProps) {
         setIsStreaming(false);
       }
     },
-    [],
+    [persistSession],
   );
 
   const sendMessage = useCallback(
@@ -314,9 +449,18 @@ export function AssistantProvider({ children }: AssistantProviderProps) {
           content: item.content,
         }));
 
-      await dispatchMessage(mode, trimmed, history);
+      let outbound = trimmed;
+
+      if (mode === "quiz") {
+        outbound = [
+          trimmed,
+          `Quiz settings: ${quizSettings.questionCount} questions, difficulty ${quizSettings.difficulty}.`,
+        ].join("\n\n");
+      }
+
+      await dispatchMessage(mode, outbound, history);
     },
-    [dispatchMessage, isLoading, mode, messagesByMode],
+    [dispatchMessage, isLoading, mode, messagesByMode, quizSettings],
   );
 
   const retryLastMessage = useCallback(async () => {
@@ -348,11 +492,20 @@ export function AssistantProvider({ children }: AssistantProviderProps) {
       isStreaming,
       error,
       isLive,
+      quizSettings,
+      historyEntries,
+      historyOpen,
       setMode,
+      setQuizSettings,
       openAssistant,
       closeAssistant,
       toggleAssistant,
       toggleExpanded,
+      collapseExpanded,
+      toggleHistory,
+      restoreHistoryEntry,
+      removeHistoryEntry,
+      clearHistory,
       sendMessage,
       retryLastMessage,
       clearError,
@@ -366,10 +519,18 @@ export function AssistantProvider({ children }: AssistantProviderProps) {
       isStreaming,
       error,
       isLive,
+      quizSettings,
+      historyEntries,
+      historyOpen,
       openAssistant,
       closeAssistant,
       toggleAssistant,
       toggleExpanded,
+      collapseExpanded,
+      toggleHistory,
+      restoreHistoryEntry,
+      removeHistoryEntry,
+      clearHistory,
       sendMessage,
       retryLastMessage,
       clearError,

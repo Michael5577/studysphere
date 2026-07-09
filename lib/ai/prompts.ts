@@ -48,9 +48,12 @@ const MODE_INSTRUCTIONS: Record<AssistantMode, string> = {
     "Mode: Quiz — generate an interactive multiple-choice practice quiz.",
     "Return ONLY a single fenced ```json code block with this exact shape and no other text:",
     '{"questions":[{"id":"q1","prompt":"Question text?","options":["Option A","Option B","Option C","Option D"],"correctIndex":0,"explanation":"Why the correct answer is right."}]}',
-    "Generate 5–8 questions. Each question must have 4 options unless the topic clearly needs fewer.",
+    "The student's message may end with a 'Quiz settings:' line specifying question count and difficulty — follow it exactly.",
+    "If no settings are given, generate 5 questions at mixed difficulty.",
+    "Each question must have 4 options unless the topic clearly needs fewer.",
+    "Vary which option index is correct — do not always use index 0.",
     "Do NOT include a separate answer key section — put the explanation inside each question object.",
-    "Match difficulty to what the student described. If the topic is unclear, ask one clarifying question in plain text instead of JSON.",
+    "If the topic is unclear, ask one clarifying question in plain text instead of JSON.",
   ].join(" "),
 };
 

@@ -12,6 +12,15 @@ interface AssistantMarkdownProps {
   className?: string;
   mode?: "chat" | "summarize" | "flashcards" | "quiz";
   streaming?: boolean;
+  quizPlayMode?: "practice" | "exam";
+}
+
+function looksLikeQuizJson(content: string): boolean {
+  const trimmed = content.trim();
+  return (
+    trimmed.includes('"questions"') &&
+    (trimmed.startsWith("{") || trimmed.includes("```"))
+  );
 }
 
 export function AssistantMarkdown({
@@ -19,6 +28,7 @@ export function AssistantMarkdown({
   className,
   mode,
   streaming = false,
+  quizPlayMode = "practice",
 }: AssistantMarkdownProps) {
   if (mode === "quiz" && !streaming) {
     const quiz = parseQuizPayload(content);
@@ -26,7 +36,19 @@ export function AssistantMarkdown({
     if (quiz) {
       return (
         <div className={cn("assistant-markdown", className)}>
-          <AssistantInteractiveQuiz quiz={quiz} />
+          <AssistantInteractiveQuiz quiz={quiz} playMode={quizPlayMode} />
+        </div>
+      );
+    }
+
+    // JSON came back malformed — never show raw JSON to students.
+    if (looksLikeQuizJson(content)) {
+      return (
+        <div className={cn("assistant-markdown", className)}>
+          <p className="text-sm leading-snug text-muted">
+            The quiz didn&apos;t generate cleanly this time. Please send your
+            topic again and I&apos;ll rebuild it.
+          </p>
         </div>
       );
     }
