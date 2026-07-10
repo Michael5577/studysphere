@@ -675,6 +675,18 @@ html:has(.landing-section) {
   white-space: pre-wrap;
 }
 
+/* KaTeX math inside assistant messages */
+.assistant-markdown .katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  margin: 0.5rem 0;
+  padding-block: 0.25rem;
+}
+
+.assistant-markdown .katex {
+  font-size: 1.05em;
+}
+
 @keyframes quiz-celebrate-pop {
   0% {
     transform: scale(0.97);

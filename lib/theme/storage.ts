@@ -38,6 +38,18 @@ export function readStoredTheme(): ThemeSettings {
   }
 }
 
+export function hasStoredTheme(): boolean {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  try {
+    return localStorage.getItem(THEME_STORAGE_KEY) !== null;
+  } catch {
+    return false;
+  }
+}
+
 export function writeStoredTheme(settings: ThemeSettings) {
   if (typeof window === "undefined") {
     return;

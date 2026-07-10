@@ -2,7 +2,11 @@
 
 import { applyThemeToDocument } from "@/lib/theme/apply";
 import { resolveTheme, systemPrefersDark } from "@/lib/theme/resolve";
-import { readStoredTheme, writeStoredTheme } from "@/lib/theme/storage";
+import {
+  hasStoredTheme,
+  readStoredTheme,
+  writeStoredTheme,
+} from "@/lib/theme/storage";
 import {
   DEFAULT_THEME,
   type BackgroundStyle,
@@ -111,6 +115,14 @@ export function ThemeProvider({
   }, []);
 
   const syncFromServer = useCallback((patch: Partial<ThemeSettings>) => {
+    // The device's own choice wins: only adopt server preferences when this
+    // browser has never picked a theme. Otherwise a stale server value (e.g.
+    // a database that hasn't stored appearance yet) would revert the user's
+    // selection right after they made it.
+    if (hasStoredTheme()) {
+      return;
+    }
+
     setSettings((current) => ({
       colorScheme: patch.colorScheme ?? current.colorScheme,
       backgroundStyle: patch.backgroundStyle ?? current.backgroundStyle,

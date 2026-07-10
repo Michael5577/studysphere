@@ -5,7 +5,10 @@ import { AssistantMermaid } from "@/components/assistant/assistant-mermaid";
 import { parseQuizPayload } from "@/lib/ai/quiz-parse";
 import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
+import rehypeKatex from "rehype-katex";
 import remarkGfm from "remark-gfm";
+import remarkMath from "remark-math";
+import "katex/dist/katex.min.css";
 
 interface AssistantMarkdownProps {
   content: string;
@@ -13,6 +16,13 @@ interface AssistantMarkdownProps {
   mode?: "chat" | "summarize" | "flashcards" | "quiz";
   streaming?: boolean;
   quizPlayMode?: "practice" | "exam";
+}
+
+/** Convert \(...\) and \[...\] LaTeX delimiters to $-style for remark-math. */
+function normalizeMathDelimiters(content: string): string {
+  return content
+    .replace(/\\\[([\s\S]*?)\\\]/g, (_match, expr: string) => `\n$$\n${expr}\n$$\n`)
+    .replace(/\\\((.*?)\\\)/g, (_match, expr: string) => `$${expr}$`);
 }
 
 function looksLikeQuizJson(content: string): boolean {
@@ -57,7 +67,8 @@ export function AssistantMarkdown({
   return (
     <div className={cn("assistant-markdown break-words text-[15px] leading-[1.55]", className)}>
       <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
+        remarkPlugins={[remarkGfm, remarkMath]}
+        rehypePlugins={[rehypeKatex]}
         components={{
           p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
           ul: ({ children }) => (
@@ -134,7 +145,7 @@ export function AssistantMarkdown({
           ),
         }}
       >
-        {content}
+        {normalizeMathDelimiters(content)}
       </ReactMarkdown>
     </div>
   );
