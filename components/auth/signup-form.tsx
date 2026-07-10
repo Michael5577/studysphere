@@ -40,7 +40,6 @@ export function SignupForm() {
       const result = await signUpWithEmail(email, password);
 
       if (!result.ok) {
-        console.error("Signup failed:", result.message);
         setError(result.message);
         setLoading(false);
         return;
@@ -61,7 +60,6 @@ export function SignupForm() {
         err instanceof Error
           ? err.message
           : "An unexpected error occurred. Please try again.";
-      console.error("Signup error:", err);
       setError(message);
       setLoading(false);
     }

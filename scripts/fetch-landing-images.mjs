@@ -38,15 +38,6 @@ const LANDING_IMAGES = [
     fallbackUrl:
       "https://images.unsplash.com/photo-1562774053-701939374585?auto=format&fit=crop&w=1400&q=80",
   },
-  {
-    file: "focus.jpg",
-    query: "focused student laptop deep work",
-    picsumId: 24,
-    width: 1400,
-    height: 900,
-    fallbackUrl:
-      "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1400&q=80",
-  },
 ];
 
 const TTEG_API = "https://tteg-api-53227342417.asia-south1.run.app/search";
