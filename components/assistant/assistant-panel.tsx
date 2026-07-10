@@ -172,13 +172,14 @@ export function AssistantPanel() {
                 variant="ghost"
                 size="sm"
                 className={cn(
-                  "h-9 w-9 p-0",
+                  "h-9 gap-1.5 px-2",
                   historyOpen && "bg-primary-muted text-primary",
                 )}
                 onClick={toggleHistory}
                 aria-label="Study history"
               >
                 <History className="h-4 w-4" />
+                <span className="text-xs font-semibold">History</span>
               </Button>
               <Button
                 type="button"
@@ -263,6 +264,8 @@ export function AssistantPanel() {
           {messages.length === 0 ? (
             <AssistantEmptyState
               mode={mode}
+              historyEntries={historyEntries}
+              onRestoreHistory={restoreHistoryEntry}
               onSelectPrompt={(prompt) => void sendMessage(prompt)}
               disabled={isLoading}
               isOffline={!isLive}

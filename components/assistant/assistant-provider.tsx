@@ -141,7 +141,10 @@ export function AssistantProvider({ children }: AssistantProviderProps) {
       });
   }, []);
 
-  const openAssistant = useCallback(() => setOpen(true), []);
+  const openAssistant = useCallback(() => {
+    setHistoryEntries(readAssistantHistory());
+    setOpen(true);
+  }, []);
   const closeAssistant = useCallback(() => {
     setOpen(false);
     setHistoryOpen(false);

@@ -294,37 +294,43 @@ html[data-bg="vivid"] body::after {
 
 /* Distinct palettes per background style so switching is clearly visible */
 html[data-bg="vivid"] {
-  --bg-wash-1: rgb(93 112 82 / 0.3);
-  --bg-wash-2: rgb(193 140 93 / 0.28);
-  --bg-wash-3: rgb(230 220 205 / 0.85);
+  --bg-wash-1: rgb(93 112 82 / 0.45);
+  --bg-wash-2: rgb(193 140 93 / 0.38);
+  --bg-wash-3: rgb(230 220 205 / 0.55);
 }
 
 [data-theme="dark"][data-bg="vivid"] {
-  --bg-wash-1: rgb(143 170 130 / 0.22);
-  --bg-wash-2: rgb(212 165 116 / 0.18);
-  --bg-wash-3: rgb(48 58 42 / 0.85);
+  --bg-wash-1: rgb(143 170 130 / 0.35);
+  --bg-wash-2: rgb(212 165 116 / 0.28);
+  --bg-wash-3: rgb(48 58 42 / 0.7);
 }
 
 html[data-bg="aurora"] {
-  --bg-wash-1: rgb(96 140 200 / 0.22);
-  --bg-wash-2: rgb(150 110 200 / 0.18);
-  --bg-wash-3: rgb(90 175 145 / 0.22);
+  --bg-wash-1: rgb(96 140 200 / 0.38);
+  --bg-wash-2: rgb(150 110 200 / 0.32);
+  --bg-wash-3: rgb(90 175 145 / 0.35);
 }
 
 [data-theme="dark"][data-bg="aurora"] {
-  --bg-wash-1: rgb(96 140 200 / 0.2);
-  --bg-wash-2: rgb(150 110 200 / 0.16);
-  --bg-wash-3: rgb(70 140 115 / 0.28);
+  --bg-wash-1: rgb(96 140 200 / 0.32);
+  --bg-wash-2: rgb(150 110 200 / 0.28);
+  --bg-wash-3: rgb(70 140 115 / 0.38);
 }
 
 html[data-bg="organic"] {
-  --bg-wash-1: rgb(120 108 76 / 0.22);
-  --bg-wash-2: rgb(93 112 82 / 0.18);
+  --bg-wash-1: rgb(120 108 76 / 0.35);
+  --bg-wash-2: rgb(93 112 82 / 0.28);
+  --grain-opacity: 0.08;
 }
 
 [data-theme="dark"][data-bg="organic"] {
-  --bg-wash-1: rgb(150 138 100 / 0.14);
-  --bg-wash-2: rgb(143 170 130 / 0.12);
+  --bg-wash-1: rgb(150 138 100 / 0.22);
+  --bg-wash-2: rgb(143 170 130 / 0.18);
+  --grain-opacity: 0.1;
+}
+
+html[data-bg="minimal"] {
+  --grain-opacity: 0;
 }
 
 /* Keep page content above ambient layers */
@@ -492,7 +498,7 @@ html:has(.landing-section) {
   display: flex;
   height: 100dvh;
   overflow: hidden;
-  background-color: var(--background);
+  background: transparent;
 }
 
 .app-main-scroll {
@@ -503,18 +509,50 @@ html:has(.landing-section) {
   -webkit-overflow-scrolling: touch;
   padding-bottom: var(--app-mobile-nav-total);
   background: var(--background);
+  transition: background var(--duration-normal) var(--ease);
+}
+
+/* Per-style ambient backgrounds — visible inside the app shell */
+html[data-bg="vivid"] .app-main-scroll {
+  background:
+    radial-gradient(ellipse 90% 70% at 0% -10%, var(--bg-wash-1), transparent 55%),
+    radial-gradient(ellipse 80% 60% at 100% 0%, var(--bg-wash-2), transparent 50%),
+    radial-gradient(ellipse 100% 70% at 50% 110%, var(--bg-wash-3), transparent 60%),
+    var(--background);
+}
+
+html[data-bg="organic"] .app-main-scroll {
+  background:
+    radial-gradient(ellipse 70% 55% at 10% 5%, var(--bg-wash-1), transparent 50%),
+    radial-gradient(ellipse 60% 50% at 95% 95%, var(--bg-wash-2), transparent 48%),
+    var(--background);
+}
+
+html[data-bg="aurora"] .app-main-scroll {
+  background:
+    radial-gradient(ellipse 80% 60% at 5% 10%, var(--bg-wash-1), transparent 52%),
+    radial-gradient(ellipse 70% 55% at 95% 15%, var(--bg-wash-2), transparent 50%),
+    radial-gradient(ellipse 90% 60% at 50% 100%, var(--bg-wash-3), transparent 55%),
+    var(--background);
+}
+
+html[data-bg="minimal"] .app-main-scroll {
+  background: var(--background);
 }
 
 @media (min-width: 1024px) {
-  .app-main-scroll {
-    padding-bottom: 0;
+  html[data-bg="vivid"] .app-main-scroll,
+  html[data-bg="organic"] .app-main-scroll,
+  html[data-bg="aurora"] .app-main-scroll {
     background:
-      radial-gradient(
-        circle at top right,
-        color-mix(in srgb, var(--primary-muted) 80%, transparent),
-        transparent 32rem
-      ),
-      transparent;
+      radial-gradient(circle at top right, color-mix(in srgb, var(--primary-muted) 70%, transparent), transparent 28rem),
+      radial-gradient(ellipse 90% 70% at 0% -10%, var(--bg-wash-1), transparent 55%),
+      radial-gradient(ellipse 80% 60% at 100% 0%, var(--bg-wash-2), transparent 50%),
+      var(--background);
+  }
+
+  html[data-bg="minimal"] .app-main-scroll {
+    background: var(--background);
   }
 }
 

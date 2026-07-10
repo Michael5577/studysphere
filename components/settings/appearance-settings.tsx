@@ -30,6 +30,16 @@ const styleIcons = {
   aurora: Moon,
 } as const;
 
+const stylePreview: Record<BackgroundStyle, string> = {
+  vivid:
+    "bg-gradient-to-br from-[#5d7052]/40 via-[#c18c5d]/30 to-[#e6dccd]/50",
+  organic:
+    "bg-gradient-to-br from-[#786c4c]/35 via-[#5d7052]/25 to-[#e8e4d8]/40",
+  minimal: "bg-[var(--background)] border border-border/80",
+  aurora:
+    "bg-gradient-to-br from-[#608cc8]/35 via-[#966ec8]/28 to-[#5aaf91]/32",
+};
+
 interface AppearanceSettingsProps {
   initialColorScheme: ColorScheme;
   initialBackgroundStyle: BackgroundStyle;
@@ -130,13 +140,20 @@ export function AppearanceSettings({
               >
                 <span
                   className={cn(
-                    "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl",
+                    "relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl",
                     isActive
                       ? "bg-primary text-primary-foreground"
                       : "bg-muted-surface text-muted",
                   )}
                 >
-                  <Icon className="h-4 w-4" />
+                  <span
+                    className={cn(
+                      "absolute inset-0 opacity-90",
+                      stylePreview[style],
+                    )}
+                    aria-hidden
+                  />
+                  <Icon className="relative h-4 w-4" />
                 </span>
                 <span>
                   <span className="block text-sm font-semibold text-text">
