@@ -4,32 +4,50 @@ import sharp from "sharp";
 
 const root = new URL("..", import.meta.url).pathname;
 const masterPath = join(root, "public/brand/logo-master.png");
-const sheetPath = join(root, "public/brand/asset-sheet.png");
 
-/** Pre-rendered app icons from the official brand sheet (1024×682). */
-const SHEET_CROPS = {
-  greenIcon: { left: 560, top: 38, width: 200, height: 200 },
-  whiteIcon: { left: 560, top: 248, width: 200, height: 200 },
-};
+/**
+ * The top region of logo-master contains only the circular mark; the
+ * wordmark sits below y≈700. Auto-trim then finds the exact mark bounds.
+ */
+const EMBLEM_CROP = { left: 0, top: 0, width: 1024, height: 690 };
 
-/** Emblem crop from logo-master for nav/header usage. */
-const EMBLEM_CROP = { left: 200, top: 72, width: 624, height: 520 };
+/** Trimmed emblem, resized to fit a square (two passes: sharp runs trim before extract). */
+async function emblem(size) {
+  const topRegion = await sharp(masterPath)
+    .extract(EMBLEM_CROP)
+    .png()
+    .toBuffer();
 
-async function cropFromSheet(region, size) {
-  return sharp(sheetPath)
-    .extract(region)
-    .resize(size, size, { fit: "fill" })
+  return sharp(topRegion)
+    .trim({ threshold: 12 })
+    .resize(size, size, {
+      fit: "contain",
+      background: { r: 255, g: 255, b: 255, alpha: 1 },
+    })
     .ensureAlpha()
     .png()
     .toBuffer();
 }
 
-async function emblemForNav(size) {
-  return sharp(masterPath)
-    .extract(EMBLEM_CROP)
-    .trim({ threshold: 12 })
-    .resize(size, size, { fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 0 } })
-    .ensureAlpha()
+/**
+ * Full-bleed square app icon: white tile + centered emblem (matches the
+ * brand sheet's "on light background" icon). The emblem source has a white
+ * backdrop, so a pure-white tile blends seamlessly.
+ */
+async function appIcon(size) {
+  const emblemSize = Math.round(size * 0.78);
+  const offset = Math.round((size - emblemSize) / 2);
+  const mark = await emblem(emblemSize);
+
+  return sharp({
+    create: {
+      width: size,
+      height: size,
+      channels: 4,
+      background: { r: 255, g: 255, b: 255, alpha: 1 },
+    },
+  })
+    .composite([{ input: mark, left: offset, top: offset }])
     .png()
     .toBuffer();
 }
@@ -67,12 +85,12 @@ function createIco(images) {
 
 mkdirSync(join(root, "public/brand"), { recursive: true });
 
-const icon512 = await cropFromSheet(SHEET_CROPS.greenIcon, 512);
-const icon192 = await cropFromSheet(SHEET_CROPS.greenIcon, 192);
-const appleTouch = await cropFromSheet(SHEET_CROPS.whiteIcon, 180);
-const favicon32 = await cropFromSheet(SHEET_CROPS.greenIcon, 32);
-const favicon16 = await cropFromSheet(SHEET_CROPS.greenIcon, 16);
-const logoEmblem = await emblemForNav(192);
+const icon512 = await appIcon(512);
+const icon192 = await appIcon(192);
+const appleTouch = await appIcon(180);
+const favicon32 = await appIcon(32);
+const favicon16 = await appIcon(16);
+const logoEmblem = await emblem(192);
 
 const pngExports = [
   { file: "public/icon-512.png", buffer: icon512 },
